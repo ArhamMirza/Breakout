@@ -1,45 +1,50 @@
 using System.Collections;
 using UnityEngine;
-using UnityEngine.UI; // Import for UI components
+using UnityEngine.UI;
 
 public class Player : MonoBehaviour
 {
-    public float maxAlertness = 100f; // Maximum alertness level
-    private float alertness; // Current alertness level
+    public float maxAlertness = 100f;
+    private float alertness;
 
     [Header("Player Components")]
-    public PlayerControl playerControl; // Reference to PlayerControl script
-    public Inventory inventory; // Reference to Inventory script
+    public Inventory inventory;
 
     [Header("Alertness UI")]
-    public Slider alertnessSlider; // UI Slider to represent alertness level
-    public Image alertnessFill; // Fill image of the slider to change color based on alertness
-    public Color lowAlertnessColor = Color.green; // Color when alertness is low
-    public Color highAlertnessColor = Color.red; // Color when alertness is high
+    public Slider alertnessSlider;
+    public Image alertnessFill;
+    public Color lowAlertnessColor = Color.green;
+    public Color highAlertnessColor = Color.red;
 
     [Header("Alertness Settings")]
-    public float baseAlertnessIncrease = 10f; // Base amount for alertness increase
-    public float alertnessMultiplier = 1.0f; // Multiplier to adjust the rate of increase
-    public float exponentialFactor = 2f; // Exponential factor for ramping up
-    public float alertnessDecrementRate = 1f; // Rate at which alertness decreases
+    public float baseAlertnessIncrease = 10f;
+    public float alertnessMultiplier = 1.0f;
+    public float exponentialFactor = 2f;
+    public float alertnessDecrementRate = 1f;
+
+    private bool isCrouching = false;
+    private bool isAlertnessIncreasing = false; // Track if alertness is increasing
+    private float timeSinceLastIncrease = 0f; // Track time since last alertness increase
+    public float decreaseDelay = 0.2f; // Time before alertness starts decreasing
+
+    public enum Direction
+    {
+        Up,
+        Down,
+        Left,
+        Right,
+    }
+    public Direction currentDirection = Direction.Down; // Store the current direction
 
     void Start()
     {
-        // Initialize alertness to half of the max value
         alertness = 0;
-
-        // Reference other components on the player
-        if (playerControl == null)
-        {
-            playerControl = GetComponent<PlayerControl>();
-        }
         
         if (inventory == null)
         {
             inventory = GetComponent<Inventory>();
         }
 
-        // Initialize the alertness slider UI
         if (alertnessSlider != null)
         {
             alertnessSlider.maxValue = maxAlertness;
@@ -50,58 +55,155 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        // Call any necessary methods to update alertness or manage other behaviors
-        Debug.Log("Alertness Meter: " + alertness);
-        UpdateAlertness(Time.deltaTime);
-    }
-
-    // Method to update alertness level (e.g., it could decrease over time naturally)
-    void UpdateAlertness(float deltaTime)
-    {
-        if (alertness > 0)
+        Debug.Log(alertness);
+        if(alertness > 0)
         {
-            alertness -= alertnessDecrementRate * deltaTime; // Decrease alertness over time
-            alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-            UpdateAlertnessUI(); // Update the UI
+        UpdateAlertness(Time.deltaTime);
+
+        }
+        // Debug.Log("Alertness: " + alertness);
+        if (alertness == 100)
+        {
+            // Handle what happens when alertness is 100
         }
     }
 
-    // Method to increase alertness by a certain amount
+    // Toggle crouch
+    public void ToggleCrouch()
+    {
+        isCrouching = !isCrouching;
+        if (isCrouching)
+        {
+            Debug.Log("Player is crouching. Decreasing alertness rate.");
+        }
+        else
+        {
+            Debug.Log("Player stopped crouching.");
+        }
+    }
+
+    // Interaction function
+    public void Interact(GameObject target)
+    {
+        string targetTag = target.tag;
+        Debug.Log(targetTag);
+
+        // Check for specific tag types and handle accordingly
+        if (targetTag == "Window")
+        {
+            // Handle Window interaction
+            if (inventory.HasItem("Rope"))
+            {
+                Debug.Log("You can escape through the window!");
+                // Escape through window logic here
+            }
+            else
+            {
+                Debug.Log("Cannot escape, no rope in inventory.");
+            }
+        }
+        else if (targetTag.StartsWith("NPC_") || targetTag.StartsWith("Item_") || targetTag.StartsWith("Door_"))
+        {
+            // Split tag to get the object type and specific type
+            string[] tagParts = targetTag.Split('_');
+            string mainType = tagParts[0];       // "NPC", "Item", "Door"
+            string specificType = tagParts.Length > 1 ? tagParts[1] : ""; // Specific type after underscore
+
+            switch (mainType)
+            {
+                case "NPC":
+                    // Handle NPC interaction
+                    Debug.Log("Talking to NPC: " + specificType);
+                    // NPC interaction logic here
+                    break;
+
+                case "Item":
+                    // Add item to inventory
+                    inventory.AddItem(specificType);
+                    Debug.Log("Picked up item: " + specificType);
+                    Destroy(target);
+                    break;
+
+                case "Door":
+                    // Check for required item to unlock door
+                    if (specificType == "Lockpick" && inventory.HasItem("Lockpick"))
+                    {
+                        Debug.Log("Unlocked door with Lockpick!");
+                        // Door unlock logic here
+                    }
+                    else if (specificType == "Card" && inventory.HasItem("Card"))
+                    {
+                        Debug.Log("Unlocked door with Card!");
+                        // Door unlock logic here
+                    }
+                    else
+                    {
+                        Debug.Log("Door requires " + specificType + " to unlock, but it’s not in inventory.");
+                    }
+                    break;
+
+                default:
+                    Debug.Log("Unknown interaction type.");
+                    break;
+            }
+        }
+        else
+        {
+            // Debug.Log("Invalid or unrecognized tag format.");
+        }
+    }
+
     public void SetAlertness(float value)
     {
         alertness = Mathf.Clamp(value, 0, maxAlertness);
+        isAlertnessIncreasing = true; // Set the flag to indicate that alertness is increasing
+        timeSinceLastIncrease = 0f; // Reset the timer
     }
+
+    // Increase alertness
     public void IncreaseAlertness(float amount)
     {
-        // Use an exponential function to increase alertness
         float increaseAmount = baseAlertnessIncrease * alertnessMultiplier * Mathf.Pow(exponentialFactor, amount);
         alertness += increaseAmount;
         alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-        UpdateAlertnessUI(); // Update the UI
+        UpdateAlertnessUI();
+        isAlertnessIncreasing = true; // Indicate that alertness is increasing
+        timeSinceLastIncrease = 0f; // Reset the timer
     }
 
-    // Method to decrease alertness by a certain amount
-    public void DecreaseAlertness(float amount)
+    public void SetDirection(Direction direction)
     {
-        alertness -= amount;
+        currentDirection = direction;
+    }
+
+    // Update alertness over time
+    private void UpdateAlertness(float deltaTime)
+{
+    // Update only if alertness is changing
+    if (isAlertnessIncreasing)
+    {
+        timeSinceLastIncrease += deltaTime; // Increment timer
+        // Debug.Log(timeSinceLastIncrease);
+    }
+
+    // Check if alertness should decrease
+    if (timeSinceLastIncrease >= decreaseDelay)
+    {
+        // Decrease alertness only if the conditions are met
+        alertness -= alertnessDecrementRate * deltaTime;
         alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-        UpdateAlertnessUI(); // Update the UI
-    }
+        UpdateAlertnessUI(); // Update UI only when there's a change
+        isAlertnessIncreasing = false;
 
-    // Get the current alertness level as a percentage
-    public float GetAlertnessPercentage()
-    {
-        return (alertness / maxAlertness) * 100f;
     }
+}
 
-    // Update the UI slider and fill color based on alertness
+
     private void UpdateAlertnessUI()
     {
         if (alertnessSlider != null)
         {
             alertnessSlider.value = alertness;
-
-            // Change fill color based on alertness level
             float alertnessFraction = alertness / maxAlertness;
             alertnessFill.color = Color.Lerp(lowAlertnessColor, highAlertnessColor, alertnessFraction);
         }

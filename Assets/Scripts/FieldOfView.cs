@@ -89,10 +89,6 @@ public class FieldOfView : MonoBehaviour
 }
 
 
-
-
-
-
     // Utility function to get direction from an angle
     Vector3 DirFromAngle(float angleInDegrees)
     {

@@ -46,7 +46,6 @@ public class GuardAI : MonoBehaviour
     {
         if (fieldOfView.targetDetected)
         {
-            Debug.Log("Player detected");
             HandlePlayerDetection();
         }
     }
