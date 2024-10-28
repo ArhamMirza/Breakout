@@ -22,6 +22,9 @@ public class Player : MonoBehaviour
     public float exponentialFactor = 2f;
     public float alertnessDecrementRate = 1f;
 
+    private float defaultAlertnessMultiplier;
+    private float defaultExponentialFactor;
+
     private bool isCrouching = false;
     private bool isAlertnessIncreasing = false; // Track if alertness is increasing
     private float timeSinceLastIncrease = 0f; // Track time since last alertness increase
@@ -39,7 +42,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         alertness = 0;
-        
+
         if (inventory == null)
         {
             inventory = GetComponent<Inventory>();
@@ -51,17 +54,23 @@ public class Player : MonoBehaviour
             alertnessSlider.value = alertness;
             UpdateAlertnessUI();
         }
+
+        // Store the default values for resetting later
+        defaultAlertnessMultiplier = alertnessMultiplier;
+        defaultExponentialFactor = exponentialFactor;
     }
 
     void Update()
     {
-        Debug.Log(alertness);
-        if(alertness > 0)
+        if (alertness > 0)
         {
-        UpdateAlertness(Time.deltaTime);
-
+            Debug.Log(alertness);
         }
-        // Debug.Log("Alertness: " + alertness);
+        if (alertness >= 0)
+        {
+            UpdateAlertness(Time.deltaTime);
+        }
+
         if (alertness == 100)
         {
             // Handle what happens when alertness is 100
@@ -74,11 +83,16 @@ public class Player : MonoBehaviour
         isCrouching = !isCrouching;
         if (isCrouching)
         {
-            Debug.Log("Player is crouching. Decreasing alertness rate.");
+            Debug.Log("Player crouching.");
+            exponentialFactor = 0.3f;
+            alertnessMultiplier = 0.5f;
         }
         else
         {
             Debug.Log("Player stopped crouching.");
+            // Reset alertness settings to default values
+            exponentialFactor = defaultExponentialFactor;
+            alertnessMultiplier = defaultAlertnessMultiplier;
         }
     }
 
@@ -88,10 +102,8 @@ public class Player : MonoBehaviour
         string targetTag = target.tag;
         Debug.Log(targetTag);
 
-        // Check for specific tag types and handle accordingly
         if (targetTag == "Window")
         {
-            // Handle Window interaction
             if (inventory.HasItem("Rope"))
             {
                 Debug.Log("You can escape through the window!");
@@ -104,71 +116,56 @@ public class Player : MonoBehaviour
         }
         else if (targetTag.StartsWith("NPC_") || targetTag.StartsWith("Item_") || targetTag.StartsWith("Door_"))
         {
-            // Split tag to get the object type and specific type
             string[] tagParts = targetTag.Split('_');
-            string mainType = tagParts[0];       // "NPC", "Item", "Door"
-            string specificType = tagParts.Length > 1 ? tagParts[1] : ""; // Specific type after underscore
+            string mainType = tagParts[0];
+            string specificType = tagParts.Length > 1 ? tagParts[1] : "";
 
             switch (mainType)
             {
                 case "NPC":
-                    // Handle NPC interaction
                     Debug.Log("Talking to NPC: " + specificType);
-                    // NPC interaction logic here
                     break;
-
                 case "Item":
-                    // Add item to inventory
                     inventory.AddItem(specificType);
                     Debug.Log("Picked up item: " + specificType);
                     Destroy(target);
                     break;
-
                 case "Door":
-                    // Check for required item to unlock door
                     if (specificType == "Lockpick" && inventory.HasItem("Lockpick"))
                     {
                         Debug.Log("Unlocked door with Lockpick!");
-                        // Door unlock logic here
                     }
                     else if (specificType == "Card" && inventory.HasItem("Card"))
                     {
                         Debug.Log("Unlocked door with Card!");
-                        // Door unlock logic here
                     }
                     else
                     {
                         Debug.Log("Door requires " + specificType + " to unlock, but it’s not in inventory.");
                     }
                     break;
-
                 default:
                     Debug.Log("Unknown interaction type.");
                     break;
             }
-        }
-        else
-        {
-            // Debug.Log("Invalid or unrecognized tag format.");
         }
     }
 
     public void SetAlertness(float value)
     {
         alertness = Mathf.Clamp(value, 0, maxAlertness);
-        isAlertnessIncreasing = true; // Set the flag to indicate that alertness is increasing
-        timeSinceLastIncrease = 0f; // Reset the timer
+        isAlertnessIncreasing = true;
+        timeSinceLastIncrease = 0f;
     }
 
-    // Increase alertness
     public void IncreaseAlertness(float amount)
     {
         float increaseAmount = baseAlertnessIncrease * alertnessMultiplier * Mathf.Pow(exponentialFactor, amount);
         alertness += increaseAmount;
         alertness = Mathf.Clamp(alertness, 0, maxAlertness);
         UpdateAlertnessUI();
-        isAlertnessIncreasing = true; // Indicate that alertness is increasing
-        timeSinceLastIncrease = 0f; // Reset the timer
+        isAlertnessIncreasing = true;
+        timeSinceLastIncrease = 0f;
     }
 
     public void SetDirection(Direction direction)
@@ -176,28 +173,21 @@ public class Player : MonoBehaviour
         currentDirection = direction;
     }
 
-    // Update alertness over time
     private void UpdateAlertness(float deltaTime)
-{
-    // Update only if alertness is changing
-    if (isAlertnessIncreasing)
     {
-        timeSinceLastIncrease += deltaTime; // Increment timer
-        // Debug.Log(timeSinceLastIncrease);
+        if (isAlertnessIncreasing)
+        {
+            timeSinceLastIncrease += deltaTime;
+        }
+
+        if (timeSinceLastIncrease >= decreaseDelay)
+        {
+            alertness -= alertnessDecrementRate * deltaTime;
+            alertness = Mathf.Clamp(alertness, 0, maxAlertness);
+            UpdateAlertnessUI();
+            isAlertnessIncreasing = false;
+        }
     }
-
-    // Check if alertness should decrease
-    if (timeSinceLastIncrease >= decreaseDelay)
-    {
-        // Decrease alertness only if the conditions are met
-        alertness -= alertnessDecrementRate * deltaTime;
-        alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-        UpdateAlertnessUI(); // Update UI only when there's a change
-        isAlertnessIncreasing = false;
-
-    }
-}
-
 
     private void UpdateAlertnessUI()
     {

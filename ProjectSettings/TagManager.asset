@@ -10,6 +10,9 @@ TagManager:
   - Stationary
   - Item_Screwdriver
   - Box
+  - Door_Card
+  - Door_Lockpick
+  - Item_Pliers
   layers:
   - Default
   - TransparentFX
