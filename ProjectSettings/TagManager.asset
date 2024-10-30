@@ -13,6 +13,9 @@ TagManager:
   - Door_Card
   - Door_Lockpick
   - Item_Pliers
+  - Item_Lockpick
+  - Item_Part
+  - Cover
   layers:
   - Default
   - TransparentFX

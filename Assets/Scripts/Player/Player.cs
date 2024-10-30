@@ -84,8 +84,8 @@ public class Player : MonoBehaviour
         if (isCrouching)
         {
             Debug.Log("Player crouching.");
-            exponentialFactor = 0.3f;
-            alertnessMultiplier = 0.5f;
+            exponentialFactor = 0.5f;
+            alertnessMultiplier = 0.75f;
         }
         else
         {
