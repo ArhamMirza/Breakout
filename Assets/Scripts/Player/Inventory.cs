@@ -4,26 +4,16 @@ using UnityEngine;
 public class Inventory : MonoBehaviour
 {
     // Inventory item list
-    public List<string> items = new List<string>();
+    private List<string> items = new List<string>();
 
-    // Optional: set a maximum inventory capacity
-    public int maxCapacity = 10;
-
-    // Add an item to the inventory if there's space
     public void AddItem(string item)
     {
-        if (items.Count < maxCapacity)
-        {
-            items.Add(item);
-            Debug.Log("Item added: " + item);
-        }
-        else
-        {
-            Debug.Log("Inventory is full! Cannot add: " + item);
-        }
+        
+        items.Add(item);
+        Debug.Log("Item added: " + item);
+       
     }
 
-    // Remove an item from the inventory
     public void RemoveItem(string item)
     {
         if (items.Contains(item))
@@ -37,19 +27,16 @@ public class Inventory : MonoBehaviour
         }
     }
 
-    // Check if the inventory has a specific item
     public bool HasItem(string item)
     {
         return items.Contains(item);
     }
 
-    // Get the number of items in the inventory
     public int GetItemCount()
     {
         return items.Count;
     }
 
-    // Clear all items from the inventory
     public void ClearInventory()
     {
         items.Clear();

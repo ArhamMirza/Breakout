@@ -4,19 +4,18 @@ using UnityEngine;
 
 public class GuardAI : MonoBehaviour
 {
-    public FieldOfView fieldOfView;
-    public float pauseDuration = 2f;
-    public float speed = 2f;
+    [SerializeField] private FieldOfView fieldOfView;
+    [SerializeField] private float pauseDuration = 2f;
+    [SerializeField] private float speed = 2f;
+    [SerializeField] private bool patrolVertical;
+    [SerializeField] private float patrolLength = 5f;
+    [SerializeField] private float alertnessIncreaseRate = 10f; 
+    [SerializeField] private List<FieldOfView.FieldOfViewDirection> lookAroundDirections;
     private Transform player;
     private Player playerScript;
     private Vector2 originalPosition;
     private string guardType;
 
-    public bool patrolVertical;
-    public float patrolLength = 5f;
-    public float alertnessIncreaseRate = 10f; // Base alertness increase rate
-
-    public List<FieldOfView.FieldOfViewDirection> lookAroundDirections;
 
     void Start()
     {
@@ -55,17 +54,17 @@ public class GuardAI : MonoBehaviour
     Vector2 directionToPlayer = player.position - transform.position;
     float distanceToPlayer = directionToPlayer.magnitude;
 
-    // Check if the player is in line of sight by evaluating the angle to the player's position
+    //This line of code is used to determine if the player is directly in line of sight of guard.
     bool isPlayerInLineOfSight = Mathf.Abs(directionToPlayer.x) < 0.5f || Mathf.Abs(directionToPlayer.y) < 0.5f;
 
     if (isPlayerInLineOfSight)
     {
-        // Set alertness to 100 if the player is directly in line of sight
+        //Alertness immediately set to 100 to prevemt players from just running past guards right on front of them
         playerScript.SetAlertness(100);
     }
     else
     {
-        // Gradual alertness increase based on distance
+        // Alertness increase based on distance.
         float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
         playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
     }
@@ -93,7 +92,15 @@ public class GuardAI : MonoBehaviour
     private IEnumerator PatrolMovement()
     {
         Vector2 patrolStart = originalPosition;
-        Vector2 patrolEnd = patrolVertical ? originalPosition + new Vector2(0f, patrolLength) : originalPosition + new Vector2(patrolLength, 0f);
+        Vector2 patrolEnd;
+        if (patrolVertical)
+        {
+            patrolEnd = originalPosition + new Vector2(0f, patrolLength);
+        }
+        else
+        {
+            patrolEnd = originalPosition + new Vector2(patrolLength, 0f);
+        }
 
         while (true)
         {

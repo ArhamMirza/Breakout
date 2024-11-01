@@ -11,20 +11,20 @@ public class FieldOfView : MonoBehaviour
         Down
     }
 
-    public FieldOfViewDirection defaultFieldOfViewDirection;
+    [SerializeField] private FieldOfViewDirection defaultFieldOfViewDirection;
     private FieldOfViewDirection fieldOfViewDirection;
 
-    public float fieldOfViewAngle = 90f;
-    public float detectionDistance = 10f;
-    public LayerMask obstructionMask;
-    public LayerMask targetMask;
+    [SerializeField] private float fieldOfViewAngle = 90f;
+    [SerializeField] private float detectionDistance = 10f;
+    [SerializeField] private LayerMask obstructionMask;
+    [SerializeField] private LayerMask targetMask;
 
-    public int rayCount = 50;
-    public float viewOffset = 0.1f;
+    [SerializeField] private int rayCount = 50;
+    [SerializeField] private float viewOffset = 0.1f;
 
     public bool targetDetected { get; private set; }
 
-    public bool adjustToRotation = true; // Toggle for adjusting to object rotation
+    [SerializeField] private bool adjustToRotation = true; 
 
     void Start()
     {
@@ -97,7 +97,6 @@ public class FieldOfView : MonoBehaviour
     {
         Vector3 direction = Vector3.up;
 
-        // Set initial direction based on the selected field of view direction
         switch (fieldOfViewDirection)
         {
             case FieldOfViewDirection.Right:
@@ -114,7 +113,6 @@ public class FieldOfView : MonoBehaviour
                 break;
         }
 
-        // Calculate rotation without using Quaternion
         if (adjustToRotation)
         {
             float angleInRadians = transform.eulerAngles.z * Mathf.Deg2Rad;
@@ -128,7 +126,15 @@ public class FieldOfView : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        Gizmos.color = targetDetected ? Color.red : Color.yellow;
+        if (targetDetected)
+        {
+            Gizmos.color = Color.red;
+        }
+        else
+        {
+            Gizmos.color = Color.yellow;
+        }
+        
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
 
         Vector3 leftBoundary = DirFromAngle(-fieldOfViewAngle / 2) * detectionDistance;

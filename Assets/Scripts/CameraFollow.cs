@@ -4,18 +4,17 @@ using UnityEngine;
 
 public class CameraFollow : MonoBehaviour
 {
-    public Transform player; // Reference to the player's transform
-    public Vector3 offset; // Offset from the player's position
+    [SerializeField] private Transform player;
+    [SerializeField] private Vector3 offset; 
 
     void LateUpdate()
     {
-        // Define the desired position of the camera
+        // This determines the location of camera.
         Vector3 desiredPosition = player.position + offset;
 
-        // Keep the z position constant at -10
+        // distance from z axis to make the game scene plane visible
         desiredPosition.z = -10f;
 
-        // Update the camera position directly
         transform.position = desiredPosition;
 
     }

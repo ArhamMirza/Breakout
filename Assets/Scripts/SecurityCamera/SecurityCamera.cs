@@ -4,10 +4,10 @@ using UnityEngine;
 
 public class SecurityCamera : MonoBehaviour
 {
-    public FieldOfView fieldOfView;
+    [SerializeField] private FieldOfView fieldOfView;
+    [SerializeField] private float alertnessIncreaseRate = 15f; 
     private Transform player;
     private Player playerScript;
-    public float alertnessIncreaseRate = 15f; // Adjusted for the camera's rate of alertness
 
     void Start()
     {
@@ -29,7 +29,6 @@ public class SecurityCamera : MonoBehaviour
         Vector2 directionToPlayer = player.position - transform.position;
         float distanceToPlayer = directionToPlayer.magnitude;
 
-        // Increase alertness when the player is in view
         float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
         playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
     }

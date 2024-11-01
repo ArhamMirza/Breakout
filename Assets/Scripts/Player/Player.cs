@@ -55,7 +55,6 @@ public class Player : MonoBehaviour
             UpdateAlertnessUI();
         }
 
-        // Store the default values for resetting later
         defaultAlertnessMultiplier = alertnessMultiplier;
         defaultExponentialFactor = exponentialFactor;
     }
@@ -73,7 +72,6 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            // Handle what happens when alertness is 100
         }
     }
 
@@ -90,13 +88,10 @@ public class Player : MonoBehaviour
         else
         {
             Debug.Log("Player stopped crouching.");
-            // Reset alertness settings to default values
             exponentialFactor = defaultExponentialFactor;
             alertnessMultiplier = defaultAlertnessMultiplier;
         }
     }
-
-    // Interaction function
     public void Interact(GameObject target)
     {
         string targetTag = target.tag;
@@ -107,7 +102,6 @@ public class Player : MonoBehaviour
             if (inventory.HasItem("Rope"))
             {
                 Debug.Log("You can escape through the window!");
-                // Escape through window logic here
             }
             else
             {
@@ -118,7 +112,15 @@ public class Player : MonoBehaviour
         {
             string[] tagParts = targetTag.Split('_');
             string mainType = tagParts[0];
-            string specificType = tagParts.Length > 1 ? tagParts[1] : "";
+            string specificType;
+            if (tagParts.Length > 1)
+            {
+                specificType = tagParts[1];
+            }
+            else
+            {
+                specificType = "";
+            }
 
             switch (mainType)
             {
