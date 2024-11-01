@@ -10,21 +10,15 @@ public class Player : MonoBehaviour
     private float defaultMoveSpeed; // Store default move speed
 
     private float alertness;
-
-    [Header("Player Components")]
     public Inventory inventory;
-
-    [Header("Alertness UI")]
-    public Slider alertnessSlider;
-    public Image alertnessFill;
-    public Color lowAlertnessColor = Color.green;
-    public Color highAlertnessColor = Color.red;
-
-    [Header("Alertness Settings")]
-    public float baseAlertnessIncrease = 10f;
-    public float alertnessMultiplier = 1.0f;
-    public float exponentialFactor = 2f;
-    public float alertnessDecrementRate = 1f;
+    [SerializeField] private Slider alertnessSlider;
+    [SerializeField] private Image alertnessFill;
+    [SerializeField] private Color lowAlertnessColor = Color.green;
+    [SerializeField] private Color highAlertnessColor = Color.red;
+    [SerializeField] private float baseAlertnessIncrease = 10f;
+    [SerializeField] private float alertnessMultiplier = 1.0f;
+    [SerializeField] private float exponentialFactor = 2f;
+    [SerializeField] private float alertnessDecrementRate = 1f;
 
     private float defaultAlertnessMultiplier;
     private float defaultExponentialFactor;
@@ -33,7 +27,7 @@ public class Player : MonoBehaviour
 
     private bool isAlertnessIncreasing = false; // Track if alertness is increasing
     private float timeSinceLastIncrease = 0f; // Track time since last alertness increase
-    public float decreaseDelay = 0.2f; // Time before alertness starts decreasing
+    [SerializeField] private float decreaseDelay = 0.2f; // Time before alertness starts decreasing
 
     public enum Direction
     {
@@ -58,7 +52,6 @@ public class Player : MonoBehaviour
         {
             alertnessSlider.maxValue = maxAlertness;
             alertnessSlider.value = alertness;
-            UpdateAlertnessUI();
         }
 
         defaultAlertnessMultiplier = alertnessMultiplier;
@@ -176,7 +169,6 @@ public class Player : MonoBehaviour
         float increaseAmount = baseAlertnessIncrease * alertnessMultiplier * Mathf.Pow(exponentialFactor, amount);
         alertness += increaseAmount;
         alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-        UpdateAlertnessUI();
         isAlertnessIncreasing = true;
         timeSinceLastIncrease = 0f;
     }
@@ -197,18 +189,9 @@ public class Player : MonoBehaviour
         {
             alertness -= alertnessDecrementRate * deltaTime;
             alertness = Mathf.Clamp(alertness, 0, maxAlertness);
-            UpdateAlertnessUI();
             isAlertnessIncreasing = false;
         }
     }
 
-    private void UpdateAlertnessUI()
-    {
-        if (alertnessSlider != null)
-        {
-            alertnessSlider.value = alertness;
-            float alertnessFraction = alertness / maxAlertness;
-            alertnessFill.color = Color.Lerp(lowAlertnessColor, highAlertnessColor, alertnessFraction);
-        }
-    }
+
 }

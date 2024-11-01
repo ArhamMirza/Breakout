@@ -24,6 +24,7 @@ public class FieldOfView : MonoBehaviour
 
     //getting this variable is public to allow for other objects to use it for eg. Guard and Security Camera, however setting this variable is private
     public bool targetDetected { get; private set; }
+    private bool wallHit;
 
     [SerializeField] private bool adjustToRotation = true; 
 
@@ -40,6 +41,7 @@ public class FieldOfView : MonoBehaviour
     void DetectTarget()
     {
         targetDetected = false;
+        wallHit = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
         if (player == null) 
         {
@@ -58,6 +60,8 @@ public class FieldOfView : MonoBehaviour
         float angleToTarget = Vector2.Angle(GetBaseDirection(), directionToTarget);
         float distanceToTarget = Vector2.Distance(offsetPosition, player.transform.position);
         bool isDirectLineOfSight = distanceToTarget < detectionDistance;
+
+        //will need to alter this to also cater to cover since cover detection overwrites the wall detection such that player is detected eventhough he is behind the wall due to another ray hitting a cover. 
 
         if (angleToTarget < fieldOfViewAngle / 2 && isDirectLineOfSight)
         {
@@ -84,19 +88,23 @@ private bool IsPlayerHit(RaycastHit2D hit, Player playerComponent)
 {
     if (hit.collider != null)
     {
+        if(hit.collider.CompareTag("Wall"))
+        {
+            return false;
+        }
+        // if (hit.collider.CompareTag("Cover"))
+        // {
+        //     if (!playerComponent.IsCrouching)
+        //     {
+        //         targetDetected = true; 
+        //         return true;
+        //     }
+        //     return false;
+        // }
         if (hit.collider.CompareTag("Player"))
         {
             targetDetected = true;
             return true;
-        }
-        if (hit.collider.CompareTag("Cover"))
-        {
-            if (!playerComponent.IsCrouching)
-            {
-                targetDetected = true; 
-                return true;
-            }
-            return false;
         }
     }
     return false;
