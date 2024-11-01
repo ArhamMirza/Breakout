@@ -22,6 +22,7 @@ public class FieldOfView : MonoBehaviour
     [SerializeField] private int rayCount = 50;
     [SerializeField] private float viewOffset = 0.1f;
 
+    //getting this variable is public to allow for other objects to use it for eg. Guard and Security Camera, however setting this variable is private
     public bool targetDetected { get; private set; }
 
     [SerializeField] private bool adjustToRotation = true; 
