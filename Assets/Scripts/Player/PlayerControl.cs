@@ -2,7 +2,6 @@ using UnityEngine;
 
 public class PlayerControl : MonoBehaviour
 {
-    [SerializeField] private float moveSpeed = 5f;
     private Rigidbody2D rb;
     private Player player;
 
@@ -67,7 +66,7 @@ public class PlayerControl : MonoBehaviour
             player.SetDirection(Player.Direction.Down);
         }
        
-        rb.MovePosition(rb.position + movement * moveSpeed * Time.deltaTime);
+        rb.MovePosition(rb.position + movement * player.MoveSpeed * Time.deltaTime);
     }
 
     public Vector2 GetDirectionAsVector2()

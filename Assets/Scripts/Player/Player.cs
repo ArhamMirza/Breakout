@@ -5,6 +5,10 @@ using UnityEngine.UI;
 public class Player : MonoBehaviour
 {
     public float maxAlertness = 100f;
+
+    [SerializeField] private float moveSpeed = 5f;
+    private float defaultMoveSpeed; // Store default move speed
+
     private float alertness;
 
     [Header("Player Components")]
@@ -42,6 +46,7 @@ public class Player : MonoBehaviour
     void Start()
     {
         alertness = 0;
+        defaultMoveSpeed = moveSpeed; // Initialize default move speed
 
         if (inventory == null)
         {
@@ -82,16 +87,25 @@ public class Player : MonoBehaviour
         if (isCrouching)
         {
             Debug.Log("Player crouching.");
+            moveSpeed = defaultMoveSpeed / 2; // Reduce move speed by half
             exponentialFactor = 0.5f;
             alertnessMultiplier = 0.75f;
         }
         else
         {
             Debug.Log("Player stopped crouching.");
+            moveSpeed = defaultMoveSpeed; // Restore to default speed
             exponentialFactor = defaultExponentialFactor;
             alertnessMultiplier = defaultAlertnessMultiplier;
         }
     }
+
+    public float MoveSpeed
+    {
+        get { return moveSpeed; }
+    }
+
+
     public void Interact(GameObject target)
     {
         string targetTag = target.tag;
@@ -112,15 +126,7 @@ public class Player : MonoBehaviour
         {
             string[] tagParts = targetTag.Split('_');
             string mainType = tagParts[0];
-            string specificType;
-            if (tagParts.Length > 1)
-            {
-                specificType = tagParts[1];
-            }
-            else
-            {
-                specificType = "";
-            }
+            string specificType = tagParts.Length > 1 ? tagParts[1] : "";
 
             switch (mainType)
             {
