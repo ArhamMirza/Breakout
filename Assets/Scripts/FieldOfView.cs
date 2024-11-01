@@ -41,7 +41,16 @@ public class FieldOfView : MonoBehaviour
     {
         targetDetected = false;
         GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) return;
+        if (player == null) 
+        {
+            return;
+        }
+
+        Player playerComponent = player.GetComponent<Player>();
+        if (playerComponent == null) 
+        {
+            return;
+        }
 
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
         Vector2 directionToTarget = (player.transform.position - offsetPosition).normalized;
@@ -56,32 +65,44 @@ public class FieldOfView : MonoBehaviour
             float angleStep = halfAngle / (rayCount / 2);
 
             RaycastHit2D hitCenter = Physics2D.Raycast(offsetPosition, GetBaseDirection(), detectionDistance, obstructionMask | targetMask);
-            if (hitCenter.collider != null && hitCenter.collider.CompareTag("Player"))
-            {
-                targetDetected = true;
-                return;
-            }
+            if (IsPlayerHit(hitCenter, playerComponent)) return;
 
             for (int i = 1; i <= rayCount / 2; i++)
             {
                 float angle = -halfAngle + i * angleStep;
                 RaycastHit2D hitLeft = Physics2D.Raycast(offsetPosition, DirFromAngle(angle), detectionDistance, obstructionMask | targetMask);
-                if (hitLeft.collider != null && hitLeft.collider.CompareTag("Player"))
-                {
-                    targetDetected = true;
-                    return;
-                }
+                if (IsPlayerHit(hitLeft, playerComponent)) return;
 
                 angle = halfAngle - i * angleStep;
                 RaycastHit2D hitRight = Physics2D.Raycast(offsetPosition, DirFromAngle(angle), detectionDistance, obstructionMask | targetMask);
-                if (hitRight.collider != null && hitRight.collider.CompareTag("Player"))
-                {
-                    targetDetected = true;
-                    return;
-                }
+                if (IsPlayerHit(hitRight, playerComponent)) return;
             }
         }
     }
+
+private bool IsPlayerHit(RaycastHit2D hit, Player playerComponent)
+{
+    if (hit.collider != null)
+    {
+        if (hit.collider.CompareTag("Player"))
+        {
+            targetDetected = true;
+            return true;
+        }
+        if (hit.collider.CompareTag("Cover"))
+        {
+            if (!playerComponent.IsCrouching)
+            {
+                targetDetected = true; 
+                return true;
+            }
+            return false;
+        }
+    }
+    return false;
+}
+
+
 
     Vector3 DirFromAngle(float angleInDegrees)
     {

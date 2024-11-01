@@ -29,7 +29,8 @@ public class Player : MonoBehaviour
     private float defaultAlertnessMultiplier;
     private float defaultExponentialFactor;
 
-    private bool isCrouching = false;
+    private bool isCrouching = false; 
+
     private bool isAlertnessIncreasing = false; // Track if alertness is increasing
     private float timeSinceLastIncrease = 0f; // Track time since last alertness increase
     public float decreaseDelay = 0.2f; // Time before alertness starts decreasing
@@ -68,7 +69,7 @@ public class Player : MonoBehaviour
     {
         if (alertness > 0)
         {
-            Debug.Log(alertness);
+            // Debug.Log(alertness);
         }
         if (alertness >= 0)
         {
@@ -105,6 +106,10 @@ public class Player : MonoBehaviour
         get { return moveSpeed; }
     }
 
+    public bool IsCrouching
+    {
+        get {return isCrouching;}
+    }
 
     public void Interact(GameObject target)
     {
