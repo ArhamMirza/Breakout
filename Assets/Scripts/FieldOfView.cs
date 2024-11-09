@@ -22,95 +22,98 @@ public class FieldOfView : MonoBehaviour
     [SerializeField] private int rayCount = 50;
     [SerializeField] private float viewOffset = 0.1f;
 
-    //getting this variable is public to allow for other objects to use it for eg. Guard and Security Camera, however setting this variable is private
     public bool targetDetected { get; private set; }
     private bool wallHit;
 
     [SerializeField] private bool adjustToRotation = true; 
 
+    private GameObject player;
+    private Player playerComponent;
+    
+    private Vector3[] rayDirections;  // Cached directions for raycasting
+
     void Start()
     {
         fieldOfViewDirection = defaultFieldOfViewDirection;
+
+        player = GameObject.FindGameObjectWithTag("Player");
+        if (player != null)
+        {
+            playerComponent = player.GetComponent<Player>();
+        }
+
+        CacheRayDirections();
     }
 
     void Update()
     {
-        DetectTarget();
+        if (player != null && playerComponent != null)
+        {
+            DetectTarget();
+        }
     }
 
     void DetectTarget()
     {
         targetDetected = false;
         wallHit = false;
-        GameObject player = GameObject.FindGameObjectWithTag("Player");
-        if (player == null) 
-        {
-            return;
-        }
-
-        Player playerComponent = player.GetComponent<Player>();
-        if (playerComponent == null) 
-        {
-            return;
-        }
 
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
         Vector2 directionToTarget = (player.transform.position - offsetPosition).normalized;
-
         float angleToTarget = Vector2.Angle(GetBaseDirection(), directionToTarget);
         float distanceToTarget = Vector2.Distance(offsetPosition, player.transform.position);
+        
         bool isDirectLineOfSight = distanceToTarget < detectionDistance;
-
-        //will need to alter this to also cater to cover since cover detection overwrites the wall detection such that player is detected eventhough he is behind the wall due to another ray hitting a cover. 
-
         if (angleToTarget < fieldOfViewAngle / 2 && isDirectLineOfSight)
         {
-            float halfAngle = fieldOfViewAngle / 2;
-            float angleStep = halfAngle / (rayCount / 2);
-
             RaycastHit2D hitCenter = Physics2D.Raycast(offsetPosition, GetBaseDirection(), detectionDistance, obstructionMask | targetMask);
-            if (IsPlayerHit(hitCenter, playerComponent)) return;
+            if (IsPlayerHit(hitCenter)) return;
 
-            for (int i = 1; i <= rayCount / 2; i++)
+            for (int i = 0; i < rayCount / 2; i++)
             {
-                float angle = -halfAngle + i * angleStep;
-                RaycastHit2D hitLeft = Physics2D.Raycast(offsetPosition, DirFromAngle(angle), detectionDistance, obstructionMask | targetMask);
-                if (IsPlayerHit(hitLeft, playerComponent)) return;
+                // Left raycast
+                RaycastHit2D hitLeft = Physics2D.Raycast(offsetPosition, rayDirections[i], detectionDistance, obstructionMask | targetMask);
+                if (IsPlayerHit(hitLeft)) return;
 
-                angle = halfAngle - i * angleStep;
-                RaycastHit2D hitRight = Physics2D.Raycast(offsetPosition, DirFromAngle(angle), detectionDistance, obstructionMask | targetMask);
-                if (IsPlayerHit(hitRight, playerComponent)) return;
+                // Right raycast
+                RaycastHit2D hitRight = Physics2D.Raycast(offsetPosition, rayDirections[rayCount / 2 + i], detectionDistance, obstructionMask | targetMask);
+                if (IsPlayerHit(hitRight)) return;
             }
         }
     }
 
-private bool IsPlayerHit(RaycastHit2D hit, Player playerComponent)
-{
-    if (hit.collider != null)
+    private bool IsPlayerHit(RaycastHit2D hit)
     {
-        if(hit.collider.CompareTag("Wall"))
+        if (hit.collider != null)
         {
-            return false;
+            if (hit.collider.CompareTag("Wall"))
+            {
+                return false;
+            }
+            if (hit.collider.CompareTag("Player"))
+            {
+                targetDetected = true;
+                return true;
+            }
         }
-        // if (hit.collider.CompareTag("Cover"))
-        // {
-        //     if (!playerComponent.IsCrouching)
-        //     {
-        //         targetDetected = true; 
-        //         return true;
-        //     }
-        //     return false;
-        // }
-        if (hit.collider.CompareTag("Player"))
+        return false;
+    }
+
+    private void CacheRayDirections()
+    {
+        rayDirections = new Vector3[rayCount];
+        float halfAngle = fieldOfViewAngle / 2;
+        float angleStep = halfAngle / (rayCount / 2);
+
+        for (int i = 0; i < rayCount / 2; i++)
         {
-            targetDetected = true;
-            return true;
+            float angle = -halfAngle + i * angleStep;
+            rayDirections[i] = DirFromAngle(angle);
+
+            angle = halfAngle - i * angleStep;
+            rayDirections[rayCount / 2 + i] = DirFromAngle(angle);
         }
     }
-    return false;
-}
-
-
 
     Vector3 DirFromAngle(float angleInDegrees)
     {
@@ -156,14 +159,9 @@ private bool IsPlayerHit(RaycastHit2D hit, Player playerComponent)
 
     void OnDrawGizmos()
     {
-        if (targetDetected)
-        {
-            Gizmos.color = Color.red;
-        }
-        else
-        {
-            Gizmos.color = Color.yellow;
-        }
+        if (player == null) return; // Prevent the error if player is not found
+
+        Gizmos.color = targetDetected ? Color.red : Color.yellow;
         
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
 
@@ -185,11 +183,13 @@ private bool IsPlayerHit(RaycastHit2D hit, Player playerComponent)
         Gizmos.DrawWireSphere(offsetPosition, detectionDistance);
     }
 
+
     public void SetFieldOfViewDirection(FieldOfViewDirection newDirection)
     {
         if (fieldOfViewDirection != newDirection)
         {
             fieldOfViewDirection = newDirection;
+            CacheRayDirections(); // Recompute ray directions if direction changes
         }
     }
 }

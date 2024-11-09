@@ -20,7 +20,7 @@ public class PlayerControl : MonoBehaviour
     void Update()
     {
         // Check for crouch toggle
-        if (Input.GetKeyDown(KeyCode.LeftShift))
+        if (Input.GetKeyDown(KeyCode.Space))
         {
             player.ToggleCrouch();
         }

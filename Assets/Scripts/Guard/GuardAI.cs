@@ -9,13 +9,16 @@ public class GuardAI : MonoBehaviour
     [SerializeField] private float speed = 2f;
     [SerializeField] private bool patrolVertical;
     [SerializeField] private float patrolLength = 5f;
-    [SerializeField] private float alertnessIncreaseRate = 10f; 
+    [SerializeField] private float alertnessIncreaseRate = 10f;
+    [SerializeField] private float detectionRadius = 5f; // Radius within which movement alerts the guard
     [SerializeField] private List<FieldOfView.FieldOfViewDirection> lookAroundDirections;
+
     private Transform player;
     private Player playerScript;
     private Vector2 originalPosition;
     private string guardType;
-
+    private Coroutine currentRoutine;
+    private bool isAlerted = false;
 
     void Start()
     {
@@ -26,19 +29,7 @@ public class GuardAI : MonoBehaviour
 
         fieldOfView = GetComponent<FieldOfView>();
 
-        switch (guardType)
-        {
-            case "Stationary":
-                break;
-
-            case "Guard":
-                StartCoroutine(LookAround());
-                break;
-
-            case "Patrol":
-                StartCoroutine(PatrolMovement());
-                break;
-        }
+        StartRoutineBasedOnGuardType();
     }
 
     void Update()
@@ -47,29 +38,126 @@ public class GuardAI : MonoBehaviour
         {
             HandlePlayerDetection();
         }
+        else
+        {
+            HandleUncrouchedMovementAlertness();
+        }
+
+        ManageAlertState();
     }
 
     private void HandlePlayerDetection()
-{
-    Vector2 directionToPlayer = player.position - transform.position;
-    float distanceToPlayer = directionToPlayer.magnitude;
-
-    //This line of code is used to determine if the player is directly in line of sight of guard.
-    bool isPlayerInLineOfSight = Mathf.Abs(directionToPlayer.x) < 0.5f || Mathf.Abs(directionToPlayer.y) < 0.5f;
-
-    if (isPlayerInLineOfSight)
     {
-        //Alertness immediately set to 100 to prevemt players from just running past guards right on front of them
-        playerScript.SetAlertness(100);
-    }
-    else
-    {
-        // Alertness increase based on distance.
-        float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
-        playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
-    }
-}
+        Vector2 directionToPlayer = player.position - transform.position;
+        float distanceToPlayer = directionToPlayer.magnitude;
+        bool isPlayerInLineOfSight = Mathf.Abs(directionToPlayer.x) < 0.5f || Mathf.Abs(directionToPlayer.y) < 0.5f;
 
+        if (isPlayerInLineOfSight)
+        {
+            playerScript.SetAlertness(100);
+        }
+        else
+        {
+            float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
+            playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
+        }
+
+        if (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
+        {
+            FacePlayerDirection();
+        }
+    }
+
+    private void HandleUncrouchedMovementAlertness()
+    {
+        Vector2 directionToPlayer = player.position - transform.position;
+        float distanceToPlayerSqr = directionToPlayer.sqrMagnitude;
+        float detectionRadiusSqr = detectionRadius * detectionRadius;
+
+        if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching)
+        {
+            float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(distanceToPlayerSqr));
+            float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;
+
+            float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease*2f,80);
+            playerScript.SetAlertness(newAlertness);
+
+            if (newAlertness > 33)
+            {
+                FacePlayerDirection();
+            }
+        }
+    }
+
+
+
+    private void ManageAlertState()
+    {
+        float alertness = playerScript.GetAlertness();
+
+        if (alertness > 33 && alertness <= 66 && !isAlerted)
+        {
+            StopCurrentRoutine();
+            currentRoutine = StartCoroutine(AlertedRoutine());
+            isAlerted = true;
+        }
+        else if (alertness < 33 && isAlerted)
+        {
+            StopCurrentRoutine();
+            StartRoutineBasedOnGuardType();
+            isAlerted = false;
+        }
+    }
+
+    private void StartRoutineBasedOnGuardType()
+    {
+        switch (guardType)
+        {
+            case "Stationary":
+                break;
+            case "Guard":
+                currentRoutine = StartCoroutine(LookAround());
+                break;
+            case "Patrol":
+                currentRoutine = StartCoroutine(PatrolMovement());
+                break;
+        }
+    }
+
+    private void StopCurrentRoutine()
+    {
+        if (currentRoutine != null)
+        {
+            StopCoroutine(currentRoutine);
+            currentRoutine = null;
+        }
+    }
+
+    private IEnumerator AlertedRoutine()
+    {
+        while (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
+        {
+            FacePlayerDirection();
+            yield return null;
+        }
+    }
+
+    private void FacePlayerDirection()
+    {
+        Vector2 directionToPlayer = player.position - transform.position;
+        FieldOfView.FieldOfViewDirection closestDirection;
+
+        if (Mathf.Abs(directionToPlayer.x) > Mathf.Abs(directionToPlayer.y))
+        {
+            closestDirection = directionToPlayer.x > 0 ? FieldOfView.FieldOfViewDirection.Right : FieldOfView.FieldOfViewDirection.Left;
+        }
+        else
+        {
+            closestDirection = directionToPlayer.y > 0 ? FieldOfView.FieldOfViewDirection.Up : FieldOfView.FieldOfViewDirection.Down;
+        }
+
+        SetDirectionAndLog(closestDirection);
+    }
 
     private IEnumerator LookAround()
     {
@@ -80,6 +168,7 @@ public class GuardAI : MonoBehaviour
         }
 
         int directionIndex = 0;
+
         while (true)
         {
             FieldOfView.FieldOfViewDirection direction = lookAroundDirections[directionIndex];
@@ -91,16 +180,7 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator PatrolMovement()
     {
-        Vector2 patrolStart = originalPosition;
-        Vector2 patrolEnd;
-        if (patrolVertical)
-        {
-            patrolEnd = originalPosition + new Vector2(0f, patrolLength);
-        }
-        else
-        {
-            patrolEnd = originalPosition + new Vector2(patrolLength, 0f);
-        }
+        Vector2 patrolEnd = patrolVertical ? originalPosition + new Vector2(0f, patrolLength) : originalPosition + new Vector2(patrolLength, 0f);
 
         while (true)
         {
@@ -109,14 +189,15 @@ public class GuardAI : MonoBehaviour
             yield return new WaitForSeconds(pauseDuration);
 
             SetDirectionAndLog(patrolVertical ? FieldOfView.FieldOfViewDirection.Down : FieldOfView.FieldOfViewDirection.Left);
-            yield return MoveToPoint(patrolStart);
+            yield return MoveToPoint(originalPosition);
             yield return new WaitForSeconds(pauseDuration);
         }
     }
 
     private IEnumerator MoveToPoint(Vector2 targetPosition)
     {
-        while (Vector2.Distance(transform.position, targetPosition) > 0.1f)
+        float threshold = 0.1f * 0.1f;
+        while ((new Vector2(transform.position.x, transform.position.y) - targetPosition).sqrMagnitude > threshold)
         {
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
             yield return null;
