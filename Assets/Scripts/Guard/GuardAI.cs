@@ -13,12 +13,21 @@ public class GuardAI : MonoBehaviour
     [SerializeField] private float detectionRadius = 5f; // Radius within which movement alerts the guard
     [SerializeField] private List<FieldOfView.FieldOfViewDirection> lookAroundDirections;
 
+    [SerializeField] private AudioSource footstepAudioSource;
+    [SerializeField] private float footstepInterval = 0.5f; // Interval between footsteps
+
+    [SerializeField] private AudioSource alertAudioSource;  // Add reference to alert sound
+    [SerializeField] private float alertAudioThreshold = 66f; 
+
+
     private Transform player;
     private Player playerScript;
     private Vector2 originalPosition;
     private string guardType;
     private Coroutine currentRoutine;
     private bool isAlerted = false;
+    private bool hasPlayedAlertSound = false; // Flag to ensure sound plays only once
+
 
     void Start()
     {
@@ -89,8 +98,6 @@ public class GuardAI : MonoBehaviour
         }
     }
 
-
-
     private void ManageAlertState()
     {
         float alertness = playerScript.GetAlertness();
@@ -106,6 +113,14 @@ public class GuardAI : MonoBehaviour
             StopCurrentRoutine();
             StartRoutineBasedOnGuardType();
             isAlerted = false;
+            hasPlayedAlertSound = false;
+        }
+
+        // Play alert sound if alertness exceeds the threshold
+        if (alertness > alertAudioThreshold && alertAudioSource != null && !alertAudioSource.isPlaying && !hasPlayedAlertSound)
+        {
+            alertAudioSource.Play();
+            hasPlayedAlertSound = true;
         }
     }
 
@@ -197,10 +212,25 @@ public class GuardAI : MonoBehaviour
     private IEnumerator MoveToPoint(Vector2 targetPosition)
     {
         float threshold = 0.1f * 0.1f;
+        StartCoroutine(PlayFootstepSounds());
         while ((new Vector2(transform.position.x, transform.position.y) - targetPosition).sqrMagnitude > threshold)
         {
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
             yield return null;
+        }
+        StopCoroutine(PlayFootstepSounds());
+    }
+
+    private IEnumerator PlayFootstepSounds()
+    {
+        // Play footstep sound at intervals, but only if the audio is not already playing
+        while (true)
+        {
+            if (footstepAudioSource != null && !footstepAudioSource.isPlaying)
+            {
+                footstepAudioSource.PlayOneShot(footstepAudioSource.clip); // Use PlayOneShot to avoid overlapping sounds
+            }
+            yield return new WaitForSeconds(footstepInterval);
         }
     }
 

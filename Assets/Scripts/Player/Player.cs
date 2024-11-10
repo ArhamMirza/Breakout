@@ -45,6 +45,11 @@ public class Player : MonoBehaviour
     [SerializeField] private Button restartButton; // Button to restart the game
     [SerializeField] private Button quitButton; // Button to quit the game
 
+    // Audio-related variables
+    [SerializeField] private AudioSource alertnessAudioSource; // Reference to the AudioSource
+    [SerializeField] private AudioClip highAlertnessAudioClip; // Audio clip for high alertness
+    [SerializeField] private AudioClip itemPickupAudioClip; // Audio clip for item pickup
+
     void Start()
     {
         alertness = 0;
@@ -76,7 +81,6 @@ public class Player : MonoBehaviour
 
     void Update()
     {
-        // Check if the player is moving
         isMoving = Input.GetAxis("Horizontal") != 0 || Input.GetAxis("Vertical") != 0;
 
         if (alertness > 0)
@@ -91,12 +95,20 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            // ShowCaughtPopup(); // Show the popup when alertness reaches 100
+            ShowCaughtPopup(); // Show the popup when alertness reaches 100
         }
 
-        // Update the alertness slider value
         alertnessSlider.value = alertness; 
         UpdateSliderColor(alertness);
+
+        // Play audio if alertness is greater than 66
+        if (alertness > maxAlertness * 0.66f)
+        {
+            if (!alertnessAudioSource.isPlaying)
+            {
+                alertnessAudioSource.PlayOneShot(highAlertnessAudioClip); // Play the sound clip
+            }
+        }
     }
 
     // Toggle crouch
@@ -187,6 +199,13 @@ public class Player : MonoBehaviour
         string itemType = target.tag.Substring(5); 
         inventory.AddItem(itemType);
         Debug.Log("Picked up item: " + itemType);
+
+        // Play item pickup sound
+        if (itemPickupAudioClip != null)
+        {
+            alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
+        }
+
         Destroy(target);
     }
 
@@ -284,4 +303,4 @@ public class Player : MonoBehaviour
         Application.Quit(); 
         #endif
     }
-}
+}  
