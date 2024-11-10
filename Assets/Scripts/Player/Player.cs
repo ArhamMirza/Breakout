@@ -91,7 +91,7 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            ShowCaughtPopup(); // Show the popup when alertness reaches 100
+            // ShowCaughtPopup(); // Show the popup when alertness reaches 100
         }
 
         // Update the alertness slider value
