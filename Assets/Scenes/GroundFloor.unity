@@ -1754,7 +1754,7 @@ RectTransform:
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
   m_AnchorMin: {x: 0, y: 1}
   m_AnchorMax: {x: 1, y: 1}
-  m_AnchoredPosition: {x: 0, y: 0.00048032438}
+  m_AnchoredPosition: {x: 0, y: 0.0012158205}
   m_SizeDelta: {x: 0, y: 388.71}
   m_Pivot: {x: 0, y: 1}
 --- !u!114 &982172944
@@ -1803,6 +1803,10 @@ PrefabInstance:
       propertyPath: m_Camera
       value: 
       objectReference: {fileID: 919436202}
+    - target: {fileID: 4158669999040830027, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
+      propertyPath: m_RenderMode
+      value: 1
+      objectReference: {fileID: 0}
     - target: {fileID: 4158669999040830027, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_PixelPerfect
       value: 0
@@ -1872,6 +1876,18 @@ PrefabInstance:
       value: 0
       objectReference: {fileID: 0}
     - target: {fileID: 7219440627561276030, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
+      propertyPath: m_LocalScale.x
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7219440627561276030, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
+      propertyPath: m_LocalScale.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7219440627561276030, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
+      propertyPath: m_LocalScale.z
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 7219440627561276030, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_LocalPosition.x
       value: 0
       objectReference: {fileID: 0}
@@ -1921,6 +1937,10 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 7326249167615597038, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_AnchorMax.y
+      value: 0
+      objectReference: {fileID: 0}
+    - target: {fileID: 9110634764713292909, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
+      propertyPath: m_PresetInfoIsWorld
       value: 0
       objectReference: {fileID: 0}
     m_RemovedComponents: []
@@ -4078,7 +4098,7 @@ MonoBehaviour:
   m_HandleRect: {fileID: 977688981}
   m_Direction: 2
   m_Value: 0
-  m_Size: 0.9999918
+  m_Size: 0.99994725
   m_NumberOfSteps: 0
   m_OnValueChanged:
     m_PersistentCalls:
