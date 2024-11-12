@@ -113,7 +113,7 @@ Transform:
   m_GameObject: {fileID: 4764550738042676789}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 1.0487752, y: -0.99087137, z: 0}
+  m_LocalPosition: {x: 18.46, y: -1.69, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children:
@@ -184,12 +184,18 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 39685f14c8db1fc49ae79ce29a154263, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  fieldOfViewDirection: 0
   fieldOfView: {fileID: 2579074524779519354}
-  pauseDuration: 2
+  pauseDuration: 1.5
   speed: 2
   patrolVertical: 0
-  patrolLength: 5
+  patrolLength: 2
+  alertnessIncreaseRate: 10
+  detectionRadius: 7
+  lookAroundDirections: 020000000100000000000000
+  footstepAudioSource: {fileID: 0}
+  footstepInterval: 0.5
+  alertAudioSource: {fileID: 0}
+  alertAudioThreshold: 66
 --- !u!61 &4227851679292377813
 BoxCollider2D:
   m_ObjectHideFlags: 0
@@ -274,13 +280,15 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: d0b72995e5af69f4bbfb5fb839eba670, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
+  defaultFieldOfViewDirection: 2
   fieldOfViewAngle: 120
-  detectionDistance: 6
+  detectionDistance: 7
   obstructionMask:
     serializedVersion: 2
     m_Bits: 64
   targetMask:
     serializedVersion: 2
     m_Bits: 128
-  viewMeshFilter: {fileID: 8680290422116558593}
   rayCount: 50
+  viewOffset: 0.1
+  adjustToRotation: 1

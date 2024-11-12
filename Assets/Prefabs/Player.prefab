@@ -32,7 +32,7 @@ Transform:
   m_GameObject: {fileID: 2865572480749812001}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: 8.627, y: -2.14, z: 0}
+  m_LocalPosition: {x: 3.65, y: -1.57, z: 0}
   m_LocalScale: {x: 1, y: 1, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
@@ -78,7 +78,7 @@ SpriteRenderer:
   m_LightmapParameters: {fileID: 0}
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 2
+  m_SortingOrder: 3
   m_Sprite: {fileID: 21300000, guid: b03c7e7bb51a6c14c934f1d20b1c2edb, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
   m_FlipX: 0
@@ -102,7 +102,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 3969aa105435ff8459f08b024c8d5de5, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  moveSpeed: 5
 --- !u!1839735485 &909827488816673967
 Tilemap:
   m_ObjectHideFlags: 0
@@ -181,17 +180,24 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: 
   maxAlertness: 100
+  moveSpeed: 5
   inventory: {fileID: 5866155338248299114}
-  alertnessSlider: {fileID: 0}
-  alertnessFill: {fileID: 0}
   lowAlertnessColor: {r: 0, g: 1, b: 0, a: 1}
   highAlertnessColor: {r: 1, g: 0, b: 0, a: 1}
+  mediumAlertnessColor: {r: 1, g: 0.92156863, b: 0.015686275, a: 1}
   baseAlertnessIncrease: 3
   alertnessMultiplier: 1
   exponentialFactor: 1
   alertnessDecrementRate: 10
   decreaseDelay: 1
   currentDirection: 1
+  alertnessSlider: {fileID: 0}
+  caughtPopup: {fileID: 0}
+  restartButton: {fileID: 0}
+  quitButton: {fileID: 0}
+  alertnessAudioSource: {fileID: 0}
+  highAlertnessAudioClip: {fileID: 8300000, guid: 048290a9b5459c843be46be6f2a509c4, type: 3}
+  itemPickupAudioClip: {fileID: 8300000, guid: d3b72cd93b675024698bc2ca20696d07, type: 3}
 --- !u!114 &5866155338248299114
 MonoBehaviour:
   m_ObjectHideFlags: 0
@@ -204,8 +210,8 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: cdef4d3df5df2f640bc1118da2e30a82, type: 3}
   m_Name: 
   m_EditorClassIdentifier: 
-  items: []
-  maxCapacity: 10
+  inventoryItemPrefab: {fileID: 8377135552534722672, guid: ef32aa5966c256342b81c70dadfbe0cb, type: 3}
+  inventoryContent: {fileID: 0}
 --- !u!58 &7000047032581660538
 CircleCollider2D:
   m_ObjectHideFlags: 0

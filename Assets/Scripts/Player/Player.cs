@@ -5,11 +5,15 @@ using System.Collections.Generic;
 
 public class Player : MonoBehaviour
 {
+    public static Player Instance { get; private set; }
+
     public float maxAlertness = 100f;
     [SerializeField] private float moveSpeed = 5f;
     private float defaultMoveSpeed; // Store default move speed
     private float alertness;
     public Inventory inventory;
+    private Transform spawnVent1;
+
     [SerializeField] private Color lowAlertnessColor = Color.green;
     [SerializeField] private Color highAlertnessColor = Color.red;
     [SerializeField] private Color mediumAlertnessColor = Color.yellow;
@@ -27,6 +31,9 @@ public class Player : MonoBehaviour
 
     private Image fillImage; 
     private bool isMoving = false; // New field to track movement
+    private string lastEnteredVent = ""; // Track which vent was entered
+    private string lastScene = "";
+
 
     public enum Direction
     {
@@ -50,6 +57,25 @@ public class Player : MonoBehaviour
     [SerializeField] private AudioClip highAlertnessAudioClip; // Audio clip for high alertness
     [SerializeField] private AudioClip itemPickupAudioClip; // Audio clip for item pickup
 
+    void Awake()
+    {
+        if (Instance == null)
+        {
+            Instance = this;
+            DontDestroyOnLoad(gameObject); // Keep this instance across scenes
+        }
+        else
+        {
+            Destroy(gameObject); // Destroy duplicate instances
+        }
+         DontDestroyOnLoad(inventory.gameObject);  // Persist inventory object
+        DontDestroyOnLoad(alertnessSlider.gameObject); // Persist slider UI
+        DontDestroyOnLoad(caughtPopup);  // Persist popup UI
+        DontDestroyOnLoad(restartButton.gameObject);  // Persist restart button UI
+        DontDestroyOnLoad(quitButton.gameObject);  // Persist quit button UI
+        DontDestroyOnLoad(alertnessAudioSource);  // Persist audio source
+    }
+
     void Start()
     {
         alertness = 0;
@@ -69,7 +95,9 @@ public class Player : MonoBehaviour
             { "Window", HandleWindowInteraction },
             { "NPC_", HandleNPCInteraction },
             { "Item_", HandleItemInteraction },
-            { "Door_", HandleDoorInteraction }
+            { "Door_", HandleDoorInteraction },
+            { "Vent1", target => HandleVentInteraction("Vent1", target) }, // Vent1 can be opened from both sides
+            { "Vent2", target => HandleVentInteraction("Vent2", target) }  
         };
         fillImage = alertnessSlider.fillRect.GetComponent<Image>();
 
@@ -223,6 +251,81 @@ public class Player : MonoBehaviour
         }
     }
 
+    // Handle vent interation
+    private void HandleVentInteraction(string ventId, GameObject target)
+    {
+        if (inventory.HasItem("Screwdriver"))
+        {
+            Debug.Log($"{ventId} opened with screwdriver.");
+
+            // Set the last entered vent ID to track spawn location in the Vents scene
+            lastEnteredVent = ventId;
+
+            // Save the current scene name before transitioning
+            lastScene = SceneManager.GetActiveScene().name;
+
+            // Load the Vents scene
+            if (lastScene != "Vents")
+            {
+                SceneManager.LoadScene("Vents", LoadSceneMode.Single);
+            }
+            else
+            {   
+                SceneManager.LoadScene("GroundFloor", LoadSceneMode.Single);
+            }
+        }
+        else
+        {
+            Debug.Log($"Cannot open {ventId} without a screwdriver.");
+        }
+    }
+
+
+    // Called when the Vents scene is loaded
+    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+    {
+        // Set last scene
+
+        // Check which scene is loaded and place the player at the correct spawn point
+        if (scene.name == "Vents" && lastScene !="Vents")
+        {
+            // Find the spawn point for the Vents scene
+            spawnVent1 = GameObject.Find("Spawn_Vent1").transform;
+
+            // Set player position to the correct spawn point
+            transform.position = spawnVent1.position;
+        }
+        else if (scene.name == "GroundFloor" && lastScene == "Vents")
+        {
+            // Find the spawn point for the GroundFloor scene
+            Transform spawnGroundFloor = GameObject.Find("Spawn_Vent1").transform;
+
+            // Set player position to the correct spawn point
+            transform.position = spawnGroundFloor.position;
+        }
+        else
+        {
+            Debug.Log("Player loaded a scene other than the Vents or GroundFloor scenes.");
+        }
+        if (lastScene != scene.name)
+        {
+            lastScene = scene.name;
+        }
+    }
+
+
+void OnEnable()
+{
+    SceneManager.sceneLoaded += OnSceneLoaded;
+}
+
+void OnDisable()
+{
+        SceneManager.sceneLoaded -= OnSceneLoaded;
+}
+
+
+
     public void SetAlertness(float value)
     {
         alertness = Mathf.Clamp(value, 0, maxAlertness);
@@ -288,7 +391,10 @@ public class Player : MonoBehaviour
     private void RestartGame()
     {
         Time.timeScale = 1; 
-        Debug.Log("hello");
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject);  // Destroy the current player object
+        }
         
         SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); 
     }

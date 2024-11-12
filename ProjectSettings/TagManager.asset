@@ -16,6 +16,13 @@ TagManager:
   - Item_Lockpick
   - Item_Part
   - Cover
+  - Vent1
+  - Vent2_KitchenSIde
+  - Vent2_VentSystem
+  - Vent3
+  - Vent4
+  - Vent5_LockerRoom
+  - Vent5_VentSystem
   layers:
   - Default
   - TransparentFX
