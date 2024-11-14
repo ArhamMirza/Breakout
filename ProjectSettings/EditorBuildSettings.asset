@@ -11,4 +11,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/Vents.unity
     guid: 4778bda542b8e7e429230911e8507516
+  - enabled: 1
+    path: Assets/Scenes/Basement.unity
+    guid: 725071e6f211b5c42bc6958f57c8ab53
   m_configObjects: {}

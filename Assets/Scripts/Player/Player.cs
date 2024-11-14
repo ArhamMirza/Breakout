@@ -57,6 +57,9 @@ public class Player : MonoBehaviour
     [SerializeField] private AudioClip highAlertnessAudioClip; // Audio clip for high alertness
     [SerializeField] private AudioClip itemPickupAudioClip; // Audio clip for item pickup
 
+    [SerializeField] private GameObject stairsBasement; // Reference to Stairs_Basement object
+
+
     void Awake()
     {
         if (Instance == null)
@@ -68,6 +71,11 @@ public class Player : MonoBehaviour
         {
             Destroy(gameObject); // Destroy duplicate instances
         }
+    
+        if (stairsBasement != null)
+        {
+            DontDestroyOnLoad(stairsBasement);
+        }
          DontDestroyOnLoad(inventory.gameObject);  // Persist inventory object
         DontDestroyOnLoad(alertnessSlider.gameObject); // Persist slider UI
         DontDestroyOnLoad(caughtPopup);  // Persist popup UI
@@ -78,7 +86,8 @@ public class Player : MonoBehaviour
 
     void Start()
     {
-        alertness = 0;
+        alertness = 0f;
+        alertnessSlider.value = alertness; // Update the slider
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
 
@@ -89,6 +98,7 @@ public class Player : MonoBehaviour
 
         defaultAlertnessMultiplier = alertnessMultiplier;
         defaultExponentialFactor = exponentialFactor;
+        // Debug.Log(stairsBasement.transform.position);
 
         interactionHandlers = new Dictionary<string, System.Action<GameObject>>()
         {
@@ -97,7 +107,9 @@ public class Player : MonoBehaviour
             { "Item_", HandleItemInteraction },
             { "Door_", HandleDoorInteraction },
             { "Vent1", target => HandleVentInteraction("Vent1", target) }, // Vent1 can be opened from both sides
-            { "Vent2", target => HandleVentInteraction("Vent2", target) }  
+            { "Vent2", target => HandleVentInteraction("Vent2", target) } ,
+            { "Vent4", target => HandleVentInteraction("Vent4", target) }  
+
         };
         fillImage = alertnessSlider.fillRect.GetComponent<Image>();
 
@@ -136,6 +148,11 @@ public class Player : MonoBehaviour
             {
                 alertnessAudioSource.PlayOneShot(highAlertnessAudioClip); // Play the sound clip
             }
+        }
+        if (stairsBasement != null && (transform.position - stairsBasement.transform.position).sqrMagnitude <= 1)
+        {
+            Debug.Log("Entering Basement");
+            SceneManager.LoadScene("Basement", LoadSceneMode.Single);
         }
     }
 
@@ -290,7 +307,7 @@ public class Player : MonoBehaviour
         if (scene.name == "Vents" && lastScene !="Vents")
         {
             // Find the spawn point for the Vents scene
-            spawnVent1 = GameObject.Find("Spawn_Vent1").transform;
+            spawnVent1 = GameObject.Find("Spawn_"+lastEnteredVent).transform;
 
             // Set player position to the correct spawn point
             transform.position = spawnVent1.position;
@@ -298,10 +315,18 @@ public class Player : MonoBehaviour
         else if (scene.name == "GroundFloor" && lastScene == "Vents")
         {
             // Find the spawn point for the GroundFloor scene
-            Transform spawnGroundFloor = GameObject.Find("Spawn_Vent1").transform;
+            Transform spawnGroundFloor = GameObject.Find("Spawn_"+lastEnteredVent).transform;
 
             // Set player position to the correct spawn point
             transform.position = spawnGroundFloor.position;
+        }
+        else if (scene.name == "Basement")
+        {
+            // Find the Basement_Spawn point
+            Transform basementSpawn = GameObject.Find("Basement_Spawn").transform;
+
+            // Set player position to the Basement_Spawn point
+            transform.position = basementSpawn.position;
         }
         else
         {
@@ -314,16 +339,15 @@ public class Player : MonoBehaviour
     }
 
 
-void OnEnable()
-{
-    SceneManager.sceneLoaded += OnSceneLoaded;
-}
+    void OnEnable()
+    {
+        SceneManager.sceneLoaded += OnSceneLoaded;
+    }
 
-void OnDisable()
-{
-        SceneManager.sceneLoaded -= OnSceneLoaded;
-}
-
+    void OnDisable()
+    {
+            SceneManager.sceneLoaded -= OnSceneLoaded;
+    }
 
 
     public void SetAlertness(float value)
@@ -388,16 +412,26 @@ void OnDisable()
     }
 
     // Restart the game
-    private void RestartGame()
+   private void RestartGame()
     {
         Time.timeScale = 1; 
+
         if (Instance != null)
         {
-            Destroy(Instance.gameObject);  // Destroy the current player object
+            Destroy(Instance.gameObject); // Destroy the current player object
         }
-        
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex); 
+
+        if (alertnessAudioSource != null)
+        {
+            Destroy(alertnessAudioSource.gameObject); // Destroy the audio source
+        }
+        // Destroy the Canvas instance
+        PersistentCanvas.Instance?.DestroyCanvas();
+
+        // Reload the current scene
+        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
     }
+
 
     // Quit the game
     private void QuitGame()
