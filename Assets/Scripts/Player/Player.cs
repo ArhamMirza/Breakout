@@ -166,11 +166,12 @@ public class Player : MonoBehaviour
             }
         }
         
-        if (stairsBasement != null)
-         {
+        // if (stairsBasement != null)
+        //  {
 
-            gameSceneManager.CheckAndLoadBasement(transform, stairsBasement);
-         }
+        //     gameSceneManager.RoomTransition(transform, stairsBasement, "Basement");
+
+        //  }
     }
 
     // Toggle crouch
