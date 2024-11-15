@@ -10,13 +10,13 @@ public class GuardAI : MonoBehaviour
     [SerializeField] private bool patrolVertical;
     [SerializeField] private float patrolLength = 5f;
     [SerializeField] private float alertnessIncreaseRate = 10f;
-    [SerializeField] private float detectionRadius = 5f; // Radius within which movement alerts the guard
+    [SerializeField] private float detectionRadius = 5f; 
     [SerializeField] private List<FieldOfView.FieldOfViewDirection> lookAroundDirections;
 
     [SerializeField] private AudioSource footstepAudioSource;
-    [SerializeField] private float footstepInterval = 0.5f; // Interval between footsteps
+    [SerializeField] private float footstepInterval = 0.5f; 
 
-    [SerializeField] private AudioSource alertAudioSource;  // Add reference to alert sound
+    [SerializeField] private AudioSource alertAudioSource;  
     [SerializeField] private float alertAudioThreshold = 66f; 
 
 
@@ -26,7 +26,7 @@ public class GuardAI : MonoBehaviour
     private string guardType;
     private Coroutine currentRoutine;
     private bool isAlerted = false;
-    private bool hasPlayedAlertSound = false; // Flag to ensure sound plays only once
+    private bool hasPlayedAlertSound = false; 
 
 
     void Start()
@@ -223,12 +223,11 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator PlayFootstepSounds()
     {
-        // Play footstep sound at intervals, but only if the audio is not already playing
         while (true)
         {
             if (footstepAudioSource != null && !footstepAudioSource.isPlaying)
             {
-                footstepAudioSource.PlayOneShot(footstepAudioSource.clip); // Use PlayOneShot to avoid overlapping sounds
+                footstepAudioSource.PlayOneShot(footstepAudioSource.clip); 
             }
             yield return new WaitForSeconds(footstepInterval);
         }

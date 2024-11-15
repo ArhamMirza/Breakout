@@ -5,36 +5,62 @@ using System.Collections.Generic;
 
 public class Player : MonoBehaviour
 {
+    // Singleton Instance
     public static Player Instance { get; private set; }
 
-    public float maxAlertness = 100f;
+    // Movement Settings
+    [Header("Movement Settings")]
     [SerializeField] private float moveSpeed = 5f;
-    private float defaultMoveSpeed; // Store default move speed
-    private float alertness;
-    public Inventory inventory;
-    private Transform spawnVent1;
+    private float defaultMoveSpeed; 
+    private bool isCrouching = false;
+    private bool isMoving = false; 
 
-    [SerializeField] private Color lowAlertnessColor = Color.green;
-    [SerializeField] private Color highAlertnessColor = Color.red;
-    [SerializeField] private Color mediumAlertnessColor = Color.yellow;
+    // Alertness Settings
+    [Header("Alertness Settings")]
+    public float maxAlertness = 100f;
     [SerializeField] private float baseAlertnessIncrease = 10f;
     [SerializeField] private float alertnessMultiplier = 1.0f;
     [SerializeField] private float exponentialFactor = 2f;
     [SerializeField] private float alertnessDecrementRate = 1f;
-
+    [SerializeField] private float decreaseDelay = 0.2f; 
+    private float alertness;
     private float defaultAlertnessMultiplier;
     private float defaultExponentialFactor;
-    private bool isCrouching = false;
-    private bool isAlertnessIncreasing = false; // Track if alertness is increasing
-    private float timeSinceLastIncrease = 0f; // Track time since last alertness increase
-    [SerializeField] private float decreaseDelay = 0.2f; // Time before alertness starts decreasing
+    private bool isAlertnessIncreasing = false; 
+    private float timeSinceLastIncrease = 0f; 
 
-    private Image fillImage; 
-    private bool isMoving = false; // New field to track movement
-    private string lastEnteredVent = ""; // Track which vent was entered
+    // Alertness UI Settings
+    [Header("Alertness UI Settings")]
+    [SerializeField] private Color lowAlertnessColor = Color.green;
+    [SerializeField] private Color mediumAlertnessColor = Color.yellow;
+    [SerializeField] private Color highAlertnessColor = Color.red;
+    [SerializeField] private Slider alertnessSlider; 
+    [SerializeField] private Image fillImage; 
+
+    // Audio Settings
+    [Header("Audio Settings")]
+    [SerializeField] private AudioSource alertnessAudioSource; 
+    [SerializeField] private AudioClip highAlertnessAudioClip; 
+    [SerializeField] private AudioClip itemPickupAudioClip; 
+
+    // Inventory and Interaction
+    [Header("Inventory and Interaction")]
+    public Inventory inventory;
+    private Transform spawnVent1;
+    private Dictionary<string, System.Action<GameObject>> interactionHandlers;
+    private string lastEnteredVent = ""; 
     private string lastScene = "";
 
+    // Gameplay Objects
+    [Header("Gameplay Objects")]
+    [SerializeField] private GameObject caughtPopup; 
+    [SerializeField] private Button restartButton; 
+    [SerializeField] private Button quitButton; 
+    [SerializeField] private GameObject stairsBasement; 
+    private GameSceneManager gameSceneManager;
 
+
+    // Direction Settings
     public enum Direction
     {
         Up,
@@ -42,54 +68,46 @@ public class Player : MonoBehaviour
         Left,
         Right,
     }
-    public Direction currentDirection = Direction.Down; // Store the current direction
-
-    private Dictionary<string, System.Action<GameObject>> interactionHandlers;
-
-    [Header("UI References")]
-    [SerializeField] private Slider alertnessSlider; // Reference to the UI Slider
-    [SerializeField] private GameObject caughtPopup; // Reference to the popup
-    [SerializeField] private Button restartButton; // Button to restart the game
-    [SerializeField] private Button quitButton; // Button to quit the game
-
-    // Audio-related variables
-    [SerializeField] private AudioSource alertnessAudioSource; // Reference to the AudioSource
-    [SerializeField] private AudioClip highAlertnessAudioClip; // Audio clip for high alertness
-    [SerializeField] private AudioClip itemPickupAudioClip; // Audio clip for item pickup
-
-    [SerializeField] private GameObject stairsBasement; // Reference to Stairs_Basement object
-
+    public Direction currentDirection = Direction.Down; 
 
     void Awake()
     {
         if (Instance == null)
         {
             Instance = this;
-            DontDestroyOnLoad(gameObject); // Keep this instance across scenes
+            DontDestroyOnLoad(gameObject); 
         }
         else
         {
-            Destroy(gameObject); // Destroy duplicate instances
+            Destroy(gameObject); 
         }
     
-        if (stairsBasement != null)
+       
+       if (stairsBasement != null)
         {
             DontDestroyOnLoad(stairsBasement);
         }
-         DontDestroyOnLoad(inventory.gameObject);  // Persist inventory object
-        DontDestroyOnLoad(alertnessSlider.gameObject); // Persist slider UI
-        DontDestroyOnLoad(caughtPopup);  // Persist popup UI
-        DontDestroyOnLoad(restartButton.gameObject);  // Persist restart button UI
-        DontDestroyOnLoad(quitButton.gameObject);  // Persist quit button UI
-        DontDestroyOnLoad(alertnessAudioSource);  // Persist audio source
+
+        if (inventory != null && inventory.gameObject != null)
+        {
+            DontDestroyOnLoad(inventory.gameObject);
+        }
+
+        if (alertnessAudioSource != null)
+        {
+            DontDestroyOnLoad(alertnessAudioSource);
+        }
+ 
     }
 
     void Start()
     {
         alertness = 0f;
-        alertnessSlider.value = alertness; // Update the slider
+        alertnessSlider.value = alertness; 
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
+        gameSceneManager = FindObjectOfType<GameSceneManager>();
+
 
         if (inventory == null)
         {
@@ -98,7 +116,6 @@ public class Player : MonoBehaviour
 
         defaultAlertnessMultiplier = alertnessMultiplier;
         defaultExponentialFactor = exponentialFactor;
-        // Debug.Log(stairsBasement.transform.position);
 
         interactionHandlers = new Dictionary<string, System.Action<GameObject>>()
         {
@@ -106,7 +123,7 @@ public class Player : MonoBehaviour
             { "NPC_", HandleNPCInteraction },
             { "Item_", HandleItemInteraction },
             { "Door_", HandleDoorInteraction },
-            { "Vent1", target => HandleVentInteraction("Vent1", target) }, // Vent1 can be opened from both sides
+            { "Vent1", target => HandleVentInteraction("Vent1", target) }, 
             { "Vent2", target => HandleVentInteraction("Vent2", target) } ,
             { "Vent4", target => HandleVentInteraction("Vent4", target) }  
 
@@ -135,25 +152,25 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            ShowCaughtPopup(); // Show the popup when alertness reaches 100
+            ShowCaughtPopup(); 
         }
 
         alertnessSlider.value = alertness; 
         UpdateSliderColor(alertness);
 
-        // Play audio if alertness is greater than 66
         if (alertness > maxAlertness * 0.66f)
         {
             if (!alertnessAudioSource.isPlaying)
             {
-                alertnessAudioSource.PlayOneShot(highAlertnessAudioClip); // Play the sound clip
+                alertnessAudioSource.PlayOneShot(highAlertnessAudioClip); 
             }
         }
-        if (stairsBasement != null && (transform.position - stairsBasement.transform.position).sqrMagnitude <= 1)
-        {
-            Debug.Log("Entering Basement");
-            SceneManager.LoadScene("Basement", LoadSceneMode.Single);
-        }
+        
+        if (stairsBasement != null)
+         {
+
+            gameSceneManager.CheckAndLoadBasement(transform, stairsBasement);
+         }
     }
 
     // Toggle crouch
@@ -196,6 +213,7 @@ public class Player : MonoBehaviour
         return alertness;  
     }
 
+    //Not fully optimized yet
     public void Interact(GameObject target)
     {
         string targetTag = target.tag;
@@ -206,7 +224,6 @@ public class Player : MonoBehaviour
         }
         else
         {
-            // Check for prefix match for "NPC_", "Item_", and "Door_"
             foreach (var key in interactionHandlers.Keys)
             {
                 if (targetTag.StartsWith(key))
@@ -245,7 +262,6 @@ public class Player : MonoBehaviour
         inventory.AddItem(itemType);
         Debug.Log("Picked up item: " + itemType);
 
-        // Play item pickup sound
         if (itemPickupAudioClip != null)
         {
             alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
@@ -275,20 +291,23 @@ public class Player : MonoBehaviour
         {
             Debug.Log($"{ventId} opened with screwdriver.");
 
-            // Set the last entered vent ID to track spawn location in the Vents scene
             lastEnteredVent = ventId;
 
-            // Save the current scene name before transitioning
-            lastScene = SceneManager.GetActiveScene().name;
+            gameSceneManager.SetLastEnteredVent(lastEnteredVent);
 
-            // Load the Vents scene
+            gameSceneManager.SetLastScene();
+
+            lastScene = gameSceneManager.GetLastScene();
+
             if (lastScene != "Vents")
             {
-                SceneManager.LoadScene("Vents", LoadSceneMode.Single);
+                gameSceneManager.LoadScene("Vents");
+                // SceneManager.LoadScene("Vents", LoadSceneMode.Single);
             }
             else
             {   
-                SceneManager.LoadScene("GroundFloor", LoadSceneMode.Single);
+                gameSceneManager.LoadScene("GroundFloor");
+                // SceneManager.LoadScene("GroundFloor", LoadSceneMode.Single);
             }
         }
         else
@@ -296,59 +315,6 @@ public class Player : MonoBehaviour
             Debug.Log($"Cannot open {ventId} without a screwdriver.");
         }
     }
-
-
-    // Called when the Vents scene is loaded
-    private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
-    {
-        // Set last scene
-
-        // Check which scene is loaded and place the player at the correct spawn point
-        if (scene.name == "Vents" && lastScene !="Vents")
-        {
-            // Find the spawn point for the Vents scene
-            spawnVent1 = GameObject.Find("Spawn_"+lastEnteredVent).transform;
-
-            // Set player position to the correct spawn point
-            transform.position = spawnVent1.position;
-        }
-        else if (scene.name == "GroundFloor" && lastScene == "Vents")
-        {
-            // Find the spawn point for the GroundFloor scene
-            Transform spawnGroundFloor = GameObject.Find("Spawn_"+lastEnteredVent).transform;
-
-            // Set player position to the correct spawn point
-            transform.position = spawnGroundFloor.position;
-        }
-        else if (scene.name == "Basement")
-        {
-            // Find the Basement_Spawn point
-            Transform basementSpawn = GameObject.Find("Basement_Spawn").transform;
-
-            // Set player position to the Basement_Spawn point
-            transform.position = basementSpawn.position;
-        }
-        else
-        {
-            Debug.Log("Player loaded a scene other than the Vents or GroundFloor scenes.");
-        }
-        if (lastScene != scene.name)
-        {
-            lastScene = scene.name;
-        }
-    }
-
-
-    void OnEnable()
-    {
-        SceneManager.sceneLoaded += OnSceneLoaded;
-    }
-
-    void OnDisable()
-    {
-            SceneManager.sceneLoaded -= OnSceneLoaded;
-    }
-
 
     public void SetAlertness(float value)
     {
@@ -390,17 +356,14 @@ public class Player : MonoBehaviour
     {
         if (currentAlertness <= maxAlertness * 0.33f)
         {
-            // Low alertness - Green zone
             fillImage.color = lowAlertnessColor;
         }
         else if (currentAlertness <= maxAlertness * 0.66f)
         {
-            // Medium alertness - Yellow zone
             fillImage.color = mediumAlertnessColor;
         }
         else
         {
-            // High alertness - Red zone
             fillImage.color = highAlertnessColor;
         }
     }
@@ -416,20 +379,24 @@ public class Player : MonoBehaviour
     {
         Time.timeScale = 1; 
 
-        if (Instance != null)
-        {
-            Destroy(Instance.gameObject); // Destroy the current player object
-        }
-
         if (alertnessAudioSource != null)
         {
-            Destroy(alertnessAudioSource.gameObject); // Destroy the audio source
+            Destroy(alertnessAudioSource.gameObject); 
         }
-        // Destroy the Canvas instance
+        if(stairsBasement !=null){
+            Destroy(stairsBasement);
+        }
+        if (Instance != null)
+        {
+            Destroy(Instance.gameObject); 
+        }
+
+
         PersistentCanvas.Instance?.DestroyCanvas();
 
-        // Reload the current scene
-        SceneManager.LoadScene(SceneManager.GetActiveScene().buildIndex);
+        gameSceneManager.RestartScene();
+
+        // GameSceneManager.SceneManager.LoadScene(GameSceneManager.SceneManager.GetActiveScene().buildIndex);
     }
 
 

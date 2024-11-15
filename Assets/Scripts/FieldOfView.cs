@@ -61,9 +61,10 @@ public class FieldOfView : MonoBehaviour
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
         Vector2 directionToTarget = (player.transform.position - offsetPosition).normalized;
         float angleToTarget = Vector2.Angle(GetBaseDirection(), directionToTarget);
-        float distanceToTarget = Vector2.Distance(offsetPosition, player.transform.position);
-        
-        bool isDirectLineOfSight = distanceToTarget < detectionDistance;
+
+        float distanceToTargetSquared = (offsetPosition - player.transform.position).sqrMagnitude;
+
+        bool isDirectLineOfSight = distanceToTargetSquared < detectionDistance * detectionDistance;
         if (angleToTarget < fieldOfViewAngle / 2 && isDirectLineOfSight)
         {
             RaycastHit2D hitCenter = Physics2D.Raycast(offsetPosition, GetBaseDirection(), detectionDistance, obstructionMask | targetMask);
@@ -159,7 +160,7 @@ public class FieldOfView : MonoBehaviour
 
     void OnDrawGizmos()
     {
-        if (player == null) return; // Prevent the error if player is not found
+        if (player == null) return; 
 
         Gizmos.color = targetDetected ? Color.red : Color.yellow;
         
@@ -182,7 +183,6 @@ public class FieldOfView : MonoBehaviour
         Gizmos.color = Color.red;
         Gizmos.DrawWireSphere(offsetPosition, detectionDistance);
     }
-
 
     public void SetFieldOfViewDirection(FieldOfViewDirection newDirection)
     {

@@ -7,15 +7,14 @@ public class Inventory : MonoBehaviour
     private Dictionary<string, int> items = new Dictionary<string, int>();
     public Dictionary<string, Sprite> itemSprites = new Dictionary<string, Sprite>();
 
-    public GameObject inventoryItemPrefab;  // Prefab for each inventory item
-    public Transform inventoryContent;      // Container within the Scroll View
+    public GameObject inventoryItemPrefab;  
+    public Transform inventoryContent;      
 
     private void Start()
     {
         LoadSprites();
     }
 
-    // Load all sprites from the Resources/Sprites folder
     private void LoadSprites()
     {
         Sprite[] sprites = Resources.LoadAll<Sprite>("Sprites");
@@ -46,21 +45,17 @@ public class Inventory : MonoBehaviour
         return items.ContainsKey(item) && items[item] > 0;
     }
 
-    // Update the inventory UI by clearing it and adding each item again
     private void UpdateInventoryUI()
     {
-        // Clear the current inventory UI content
         foreach (Transform child in inventoryContent)
         {
             Destroy(child.gameObject);
         }
 
-        // Populate the UI with updated items
         foreach (var item in items)
         {
             GameObject newItem = Instantiate(inventoryItemPrefab, inventoryContent);
 
-            // Set item text (name and quantity)
             Text itemText = newItem.GetComponentInChildren<Text>();
             if (itemText != null)
             {
@@ -68,7 +63,6 @@ public class Inventory : MonoBehaviour
                 itemText.text = $"{item.Key} x{item.Value}";
             }
 
-            // Set item image (sprite)
             Image itemImage = newItem.GetComponentInChildren<Image>();
             if (itemImage != null)
             {

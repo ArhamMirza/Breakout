@@ -38,11 +38,18 @@ public class PlayerControl : MonoBehaviour
         float moveHorizontal = 0f;
         float moveVertical = 0f;
 
-        if (Input.GetKey(KeyCode.A)) moveHorizontal = -1f;
-        else if (Input.GetKey(KeyCode.D)) moveHorizontal = 1f;
+        // Horizontal movement
+        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow)) 
+            moveHorizontal = -1f;
+        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow)) 
+            moveHorizontal = 1f;
 
-        if (Input.GetKey(KeyCode.W)) moveVertical = 1f;
-        else if (Input.GetKey(KeyCode.S)) moveVertical = -1f;
+        // Vertical movement
+        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow)) 
+            moveVertical = 1f;
+        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow)) 
+            moveVertical = -1f;
+
 
         if (moveHorizontal != 0f) moveVertical = 0f;
         else if (moveVertical != 0f) moveHorizontal = 0f;
