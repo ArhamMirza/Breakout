@@ -6,6 +6,8 @@ public class GameSceneManager : MonoBehaviour
     public static GameSceneManager Instance;  
 
     private string lastScene;
+
+    private string currentScene;
     private string lastEnteredVent;
     private Transform spawnVent1;
 
@@ -20,6 +22,8 @@ public class GameSceneManager : MonoBehaviour
         {
             Destroy(gameObject);  
         }
+        string currentScene = SceneManager.GetActiveScene().name;
+
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
@@ -38,21 +42,42 @@ public class GameSceneManager : MonoBehaviour
         {
             spawnVent1 = GameObject.Find("Spawn_" + lastEnteredVent).transform;
             playerTransform.position = spawnVent1.position;
+            currentScene = scene.name;
         }
         else if (scene.name == "GroundFloor" && lastScene == "Vents")
         {
             Transform spawnGroundFloor = GameObject.Find("Spawn_" + lastEnteredVent).transform;
             playerTransform.position = spawnGroundFloor.position;
+            currentScene = scene.name;
+
         }
         else if (scene.name == "Basement" && lastScene == "GroundFloor")
         {
-            Transform basementSpawn = GameObject.Find("Basement_Spawn").transform;
+            Transform basementSpawn = GameObject.Find("Spawn_GroundToBasement").transform;
             playerTransform.position = basementSpawn.position;
+            currentScene = scene.name;
+
         }
         else if (scene.name == "GroundFloor" && lastScene == "Basement")
         {
-            Transform basementSpawn = GameObject.Find("Stairs_Basement").transform;
+            Transform basementSpawn = GameObject.Find("Spawn_BasementToGround").transform;
             playerTransform.position = basementSpawn.position;
+            currentScene = scene.name;
+
+        }
+        else if (scene.name == "TopFloor" && lastScene == "GroundFloor")
+        {
+            Transform basementSpawn = GameObject.Find("Spawn_GroundToTop").transform;
+            playerTransform.position = basementSpawn.position;
+            currentScene = scene.name;
+
+        }
+        else if (scene.name == "GroundFloor" && lastScene == "TopFloor")
+        {
+            Transform basementSpawn = GameObject.Find("Spawn_TopToGround").transform;
+            playerTransform.position = basementSpawn.position;
+            currentScene = scene.name;
+
         }
         
 
@@ -89,9 +114,17 @@ public class GameSceneManager : MonoBehaviour
         Debug.Log("Loading scene: " + sceneName);
     }
 
+    public string getCurrentScene()
+    {
+        return SceneManager.GetActiveScene().name;
+    }
+
+   
+
     public void RoomTransition(Transform playerTransform, GameObject gateway, string room)
     {
-        if ((playerTransform.position - gateway.transform.position).sqrMagnitude <= 1)
+       
+        if ((playerTransform.position - gateway.transform.position).sqrMagnitude <= 0.5)
         {
             SceneManager.LoadScene(room, LoadSceneMode.Single);
         }

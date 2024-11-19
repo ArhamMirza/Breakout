@@ -50,13 +50,20 @@ public class Player : MonoBehaviour
     private Dictionary<string, System.Action<GameObject>> interactionHandlers;
     private string lastEnteredVent = ""; 
     private string lastScene = "";
+    private string currentScene;
+
 
     // Gameplay Objects
     [Header("Gameplay Objects")]
     [SerializeField] private GameObject caughtPopup; 
     [SerializeField] private Button restartButton; 
     [SerializeField] private Button quitButton; 
-    [SerializeField] private GameObject stairsBasement; 
+    private GameObject stairsBasementToGround; 
+    private GameObject stairsGroundToBasement; 
+    private GameObject stairsGroundToTop;
+    private GameObject stairsTopToGround; 
+ 
+
     private GameSceneManager gameSceneManager;
 
 
@@ -72,6 +79,12 @@ public class Player : MonoBehaviour
 
     void Awake()
     {
+        gameSceneManager = FindObjectOfType<GameSceneManager>();
+        currentScene = gameSceneManager.getCurrentScene();
+        stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
+        stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
+        stairsBasementToGround = null;
+        stairsTopToGround = null;
         if (Instance == null)
         {
             Instance = this;
@@ -83,9 +96,21 @@ public class Player : MonoBehaviour
         }
     
        
-       if (stairsBasement != null)
+       if (stairsBasementToGround != null)
         {
-            DontDestroyOnLoad(stairsBasement);
+            DontDestroyOnLoad(stairsBasementToGround);
+        }
+        if (stairsGroundToBasement != null)
+        {
+            DontDestroyOnLoad(stairsGroundToBasement);
+        }
+         if (stairsGroundToTop != null)
+        {
+            DontDestroyOnLoad(stairsGroundToTop);
+        }
+         if (stairsTopToGround != null)
+        {
+            DontDestroyOnLoad(stairsTopToGround);
         }
 
         if (inventory != null && inventory.gameObject != null)
@@ -106,7 +131,7 @@ public class Player : MonoBehaviour
         alertnessSlider.value = alertness; 
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
-        gameSceneManager = FindObjectOfType<GameSceneManager>();
+        
 
 
         if (inventory == null)
@@ -166,12 +191,32 @@ public class Player : MonoBehaviour
             }
         }
         
-        // if (stairsBasement != null)
-        //  {
+        if (gameSceneManager.getCurrentScene() == "GroundFloor")
+        {
+            gameSceneManager.RoomTransition(transform, stairsGroundToBasement, "Basement");
+            gameSceneManager.RoomTransition(transform, stairsGroundToTop, "TopFloor");
 
-        //     gameSceneManager.RoomTransition(transform, stairsBasement, "Basement");
+        }
+        else if(gameSceneManager.getCurrentScene() == "Basement")
+        {
+            if(stairsBasementToGround == null)
+            {
+                stairsBasementToGround = GameObject.Find("Stairs_BasementToGround");
+            }
 
-        //  }
+            gameSceneManager.RoomTransition(transform, stairsBasementToGround, "GroundFloor");
+
+        }
+        else if(gameSceneManager.getCurrentScene() == "TopFloor")
+        {
+            if(stairsTopToGround == null)
+            {
+                stairsTopToGround = GameObject.Find("Stairs_TopToGround");
+            }
+
+            gameSceneManager.RoomTransition(transform, stairsTopToGround, "GroundFloor");
+
+        }
     }
 
     // Toggle crouch
@@ -384,9 +429,7 @@ public class Player : MonoBehaviour
         {
             Destroy(alertnessAudioSource.gameObject); 
         }
-        if(stairsBasement !=null){
-            Destroy(stairsBasement);
-        }
+        
         if (Instance != null)
         {
             Destroy(Instance.gameObject); 
