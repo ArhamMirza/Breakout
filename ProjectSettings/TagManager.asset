@@ -23,6 +23,7 @@ TagManager:
   - Vent4
   - Vent5_LockerRoom
   - Vent5_VentSystem
+  - Item_Disguise
   layers:
   - Default
   - TransparentFX

@@ -61,7 +61,7 @@ public class GuardAI : MonoBehaviour
         float distanceToPlayer = directionToPlayer.magnitude;
         bool isPlayerInLineOfSight = Mathf.Abs(directionToPlayer.x) < 0.5f || Mathf.Abs(directionToPlayer.y) < 0.5f;
 
-        if (isPlayerInLineOfSight)
+        if (isPlayerInLineOfSight && !playerScript.DisguiseOn)
         {
             playerScript.SetAlertness(100);
         }
@@ -83,7 +83,7 @@ public class GuardAI : MonoBehaviour
         float distanceToPlayerSqr = directionToPlayer.sqrMagnitude;
         float detectionRadiusSqr = detectionRadius * detectionRadius;
 
-        if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching)
+        if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching && !playerScript.DisguiseOn)
         {
             float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(distanceToPlayerSqr));
             float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;

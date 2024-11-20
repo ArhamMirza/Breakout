@@ -65,6 +65,14 @@ public class Player : MonoBehaviour
  
 
     private GameSceneManager gameSceneManager;
+    [SerializeField] private Sprite disguiseSprite; // New sprite for the disguise
+    private SpriteRenderer spriteRenderer; // Reference to the SpriteRenderer component
+
+    private bool disguiseOn;
+
+    
+
+
 
 
     // Direction Settings
@@ -81,6 +89,7 @@ public class Player : MonoBehaviour
     {
         gameSceneManager = FindObjectOfType<GameSceneManager>();
         currentScene = gameSceneManager.getCurrentScene();
+        spriteRenderer = GetComponent<SpriteRenderer>();
         stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
         stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
         stairsBasementToGround = null;
@@ -131,9 +140,9 @@ public class Player : MonoBehaviour
         alertnessSlider.value = alertness; 
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
+        disguiseOn = false;
+
         
-
-
         if (inventory == null)
         {
             inventory = GetComponent<Inventory>();
@@ -249,6 +258,11 @@ public class Player : MonoBehaviour
         get { return isCrouching; }
     }
 
+    public bool DisguiseOn
+    {
+        get { return disguiseOn; }
+    }
+
     public bool IsMoving
     {
         get { return isMoving; }
@@ -304,7 +318,13 @@ public class Player : MonoBehaviour
     // Handle item interaction
     private void HandleItemInteraction(GameObject target)
     {
-        string itemType = target.tag.Substring(5); 
+        string itemType = target.tag.Substring(5);
+        if(itemType == "Disguise")
+        {
+            PutOnDisguise();
+            Destroy(target);
+            return;
+        } 
         inventory.AddItem(itemType);
         Debug.Log("Picked up item: " + itemType);
 
@@ -315,6 +335,21 @@ public class Player : MonoBehaviour
 
         Destroy(target);
     }
+    private void PutOnDisguise()
+    {
+        if (disguiseSprite != null && spriteRenderer != null)
+        {
+            spriteRenderer.sprite = disguiseSprite; 
+            Debug.Log("Disguise applied!");
+            disguiseOn = true;
+            baseAlertnessIncrease /=2;
+            alertnessMultiplier/=2;
+        }
+        else
+        {
+            Debug.LogWarning("DisguiseSprite or SpriteRenderer is not set.");
+        }
+    }
 
     // Handle door interaction
     private void HandleDoorInteraction(GameObject target)
@@ -323,6 +358,7 @@ public class Player : MonoBehaviour
         if (inventory.HasItem(doorType))
         {
             Debug.Log($"Unlocked door with {doorType}!");
+            Destroy(target);
         }
         else
         {
