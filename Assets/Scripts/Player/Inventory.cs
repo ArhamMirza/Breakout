@@ -70,4 +70,30 @@ public class Inventory : MonoBehaviour
             }
         }
     }
+
+    public List<string> SerializeInventory()
+    {
+        List<string> serializedItems = new List<string>();
+        foreach (var item in items)
+        {
+            serializedItems.Add($"{item.Key}:{item.Value}");
+        }
+        return serializedItems;
+    }
+
+    public void DeserializeInventory(List<string> serializedItems)
+    {
+        items.Clear(); // Clear existing inventory
+        foreach (var entry in serializedItems)
+        {
+            string[] parts = entry.Split(':');
+            if (parts.Length == 2 && int.TryParse(parts[1], out int count))
+            {
+                items[parts[0]] = count;
+            }
+        }
+
+        UpdateInventoryUI();
+    }
+
 }

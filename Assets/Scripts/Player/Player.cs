@@ -2,6 +2,9 @@ using UnityEngine;
 using UnityEngine.UI; 
 using UnityEngine.SceneManagement; 
 using System.Collections.Generic;
+using System.IO; 
+using System; 
+
 
 public class Player : MonoBehaviour
 {
@@ -154,6 +157,7 @@ public class Player : MonoBehaviour
         interactionHandlers = new Dictionary<string, System.Action<GameObject>>()
         {
             { "Window", HandleWindowInteraction },
+            { "Save", HandleSaveInteraction},
             { "NPC_", HandleNPCInteraction },
             { "Item_", HandleItemInteraction },
             { "Door_", HandleDoorInteraction },
@@ -295,6 +299,12 @@ public class Player : MonoBehaviour
         }
     }
 
+    //Save interaction
+    private void HandleSaveInteraction(GameObject target)
+    {
+        SavePlayer();
+    }
+
     // Handle window interaction
     private void HandleWindowInteraction(GameObject target)
     {
@@ -342,8 +352,8 @@ public class Player : MonoBehaviour
             spriteRenderer.sprite = disguiseSprite; 
             Debug.Log("Disguise applied!");
             disguiseOn = true;
-            baseAlertnessIncrease /=2;
-            alertnessMultiplier/=2;
+            baseAlertnessIncrease /=3;
+            alertnessMultiplier/=3;
         }
         else
         {
@@ -490,4 +500,66 @@ public class Player : MonoBehaviour
         Application.Quit(); 
         #endif
     }
+
+    public void SavePlayer()
+    {
+        PlayerData data = new PlayerData
+        {
+            moveSpeed = moveSpeed,
+            isCrouching = isCrouching,
+            alertness = alertness,
+            alertnessMultiplier = alertnessMultiplier,
+            exponentialFactor = exponentialFactor,
+            disguiseOn = disguiseOn,
+            currentScene = currentScene,
+            lastScene = lastScene,
+            lastEnteredVent = lastEnteredVent,
+            inventoryItems = inventory.SerializeInventory(),
+            currentDirection = currentDirection.ToString(),
+            positionX = transform.position.x,
+            positionY = transform.position.y,
+            positionZ = transform.position.z
+        };
+
+        string json = JsonUtility.ToJson(data, true);
+        File.WriteAllText(Application.persistentDataPath + "/playerSave.json", json);
+        Debug.Log("Game Saved: " + Application.persistentDataPath + "/playerSave.json");
+    }
+    public void LoadPlayer()
+    {
+        string path = Application.persistentDataPath + "/playerSave.json";
+        if (File.Exists(path))
+        {
+            string json = File.ReadAllText(path);
+            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
+
+            // Restore player state
+            moveSpeed = data.moveSpeed;
+            isCrouching = data.isCrouching;
+            alertness = data.alertness;
+            alertnessMultiplier = data.alertnessMultiplier;
+            exponentialFactor = data.exponentialFactor;
+            disguiseOn = data.disguiseOn;
+            currentScene = data.currentScene;
+            lastScene = data.lastScene;
+            lastEnteredVent = data.lastEnteredVent;
+            currentDirection = Enum.TryParse(data.currentDirection, out Direction direction)
+                ? direction
+                : Direction.Down;
+
+            // Restore inventory
+            inventory.DeserializeInventory(data.inventoryItems);
+
+            // Restore position
+            transform.position = new Vector3(data.positionX, data.positionY, data.positionZ);
+
+            Debug.Log("Game Loaded");
+        }
+        else
+        {
+            Debug.LogWarning("Save file not found");
+        }
+    }
+
+
 }  
