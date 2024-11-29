@@ -19,6 +19,9 @@ public class GuardAI : MonoBehaviour
     // [SerializeField] private AudioSource alertAudioSource;  
     // [SerializeField] private float alertAudioThreshold = 66f; 
 
+    private SpriteRenderer spriteRenderer;
+
+
 
     private Transform player;
     private Player playerScript;
@@ -31,6 +34,17 @@ public class GuardAI : MonoBehaviour
 
     private float timer;
 
+    private float minDistanceBetweenGuards = 1.5f; // Minimum distance between guards
+    private float repulsionRadius = 2f; // Distance to apply repulsion from other guards
+    private float repulsionStrength = 10f; // Strength of the repulsion force
+    private LayerMask guardLayerMask; // Layer for detecting other guards
+
+    public Sprite leftSprite;  // Assign this in the Inspector
+    public Sprite rightSprite; // Assign this in the Inspector
+    public Sprite upSprite;    // Assign this in the Inspector
+    public Sprite downSprite;  
+    private FieldOfView.FieldOfViewDirection previousDirection;
+
 
 
 
@@ -39,11 +53,15 @@ public class GuardAI : MonoBehaviour
         player = GameObject.FindGameObjectWithTag("Player").transform;
         playerScript = player.GetComponent<Player>();
         originalPosition = transform.position;
+        spriteRenderer = GetComponent<SpriteRenderer>(); // Initialize SpriteRenderer
+
         guardType = gameObject.tag;
 
         fieldOfView = GetComponent<FieldOfView>();
         defaultDirection = fieldOfView.getDefaultDirection();
-        Debug.Log(defaultDirection);
+        previousDirection = defaultDirection;
+        UpdateSpriteBasedOnDirection(defaultDirection);
+
 
         StartRoutineBasedOnGuardType();
     }
@@ -60,6 +78,32 @@ public class GuardAI : MonoBehaviour
         }
 
         ManageAlertState();
+        FieldOfView.FieldOfViewDirection currentDirection = fieldOfView.getDirection();
+        if (currentDirection != previousDirection)
+        {
+            // Direction has changed, update the sprite
+            UpdateSpriteBasedOnDirection(currentDirection);
+            previousDirection = currentDirection;  // Store the current direction as previous
+        }
+    }
+
+    private void UpdateSpriteBasedOnDirection(FieldOfView.FieldOfViewDirection direction)
+    {
+        switch (direction)
+        {
+            case FieldOfView.FieldOfViewDirection.Left:
+                spriteRenderer.sprite = leftSprite;
+                break;
+            case FieldOfView.FieldOfViewDirection.Right:
+                spriteRenderer.sprite = rightSprite;
+                break;
+            case FieldOfView.FieldOfViewDirection.Up:
+                spriteRenderer.sprite = upSprite;
+                break;
+            case FieldOfView.FieldOfViewDirection.Down:
+                spriteRenderer.sprite = downSprite;
+                break;
+        }
     }
 
     private void HandlePlayerDetection()
@@ -278,165 +322,188 @@ public class GuardAI : MonoBehaviour
 
  private IEnumerator FocusOnSound(Vector3 soundPosition)
 {
-    // Convert the transform position to a Vector2 for consistent 2D logic
     Vector2 currentPosition = new Vector2(transform.position.x, transform.position.y);
-    Vector2 lastPosition = currentPosition; // Store the last position to check if movement is making progress
-
-    // Minimum distance from cover to prevent getting too close
+    Vector2 lastPosition = currentPosition;
     float minDistanceToCover = 1f;
-    float coverBufferZone = 1f; // Buffer zone to avoid getting too close to cover
+    float coverBufferZone = 1f;
 
-    // Calculate the squared distance to the sound position
+    // Variables to track direction changes
+    Vector2 previousMoveDirection = Vector2.zero;
+    int directionChangeCount = 0;
+    float directionChangeResetTime = 1f; // Time window to reset the counter
+    float directionChangeTimer = 0f;
+
+    // Check if within close range to just look at the sound
     float squaredDistanceToSound = (currentPosition - (Vector2)soundPosition).sqrMagnitude;
-
-    // If the distance to the sound is within 4f, just look in the direction of the sound
-    if (squaredDistanceToSound <= 16f) // 4f * 4f = 16f
+    if (squaredDistanceToSound <= 16f)
     {
-        // Calculate the direction to the sound (as a Vector2)
         Vector2 directionToSound = (Vector2)soundPosition - currentPosition;
-
-        // Normalize the direction, but only move in the cardinal directions (up, down, left, right)
-        Vector2 moveDirection = Vector2.zero;
-
-        // Determine which direction is closest (horizontal or vertical)
-        if (Mathf.Abs(directionToSound.x) > Mathf.Abs(directionToSound.y))
-        {
-            // Horizontal movement (left or right)
-            moveDirection = directionToSound.x > 0 ? Vector2.right : Vector2.left;
-        }
-        else
-        {
-            // Vertical movement (up or down)
-            moveDirection = directionToSound.y > 0 ? Vector2.up : Vector2.down;
-        }
-
-        // Set the field of view direction based on the sound direction
-        if (moveDirection == Vector2.right)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Right);
-        }
-        else if (moveDirection == Vector2.left)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Left);
-        }
-        else if (moveDirection == Vector2.up)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Up);
-        }
-        else if (moveDirection == Vector2.down)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Down);
-        }
-
-        // Simply look towards the sound without moving
+        Vector2 moveDirection = GetCardinalDirection(directionToSound);
+        UpdateFieldOfViewDirection(moveDirection);
         StartRoutineBasedOnGuardType();
-
-        yield break; // Exit the routine as no movement is required
+        yield break;
     }
 
-   
-
-    // Move toward the sound position with obstacle avoidance
     while ((currentPosition - (Vector2)soundPosition).sqrMagnitude > 2f)
     {
-        // Update the timer
-
-        // Calculate the direction to the sound (as a Vector2)
         Vector2 directionToSound = (Vector2)soundPosition - currentPosition;
+        Vector2 moveDirection = GetCardinalDirection(directionToSound);
 
-        // Normalize the direction, but only move in the cardinal directions (up, down, left, right)
-        Vector2 moveDirection = Vector2.zero;
-
-        // Determine which direction is closest (horizontal or vertical)
-        if (Mathf.Abs(directionToSound.x) > Mathf.Abs(directionToSound.y))
-        {
-            // Horizontal movement (left or right)
-            moveDirection = directionToSound.x > 0 ? Vector2.right : Vector2.left;
-        }
-        else
-        {
-            // Vertical movement (up or down)
-            moveDirection = directionToSound.y > 0 ? Vector2.up : Vector2.down;
-        }
-
-        // Check for a wall or cover using the updated DetectWall method
+        // Avoid obstacles and add repulsion
         string detectionResult = fieldOfView.DetectWall(new Vector3(currentPosition.x, currentPosition.y, transform.position.z), moveDirection, detectionRadius, out float distanceToWall);
-
-        if (detectionResult == "Wall")
+        if (detectionResult == "Wall" && distanceToWall < 1f)
         {
-            // If a wall is detected, stop the movement
-            if (distanceToWall < 1f)
-            {
-                break;  // Wall is too close, stop moving
-            }
+            break;
         }
-        else if (detectionResult == "Cover")
+        else if (detectionResult == "Cover" && distanceToWall < 0.5f)
         {
-            // If cover is detected, use the same distanceToWall to check the proximity to cover
-            if (distanceToWall < 0.5f)
-            {
-                // If the guard is too close to the cover, adjust the direction more decisively
-                // Move further away first if stuck close to the cover
-                if (moveDirection == Vector2.up || moveDirection == Vector2.down)
-                {
-                    // If we're moving vertically, try to switch to horizontal direction to move around the cover
-                    moveDirection = directionToSound.x > 0 ? Vector2.right : Vector2.left;
-                }
-                else
-                {
-                    // If we're moving horizontally, try to switch to vertical direction
-                    moveDirection = directionToSound.y > 0 ? Vector2.up : Vector2.down;
-                }
-
-                // If still too close, move a bit further from the cover to make space for maneuvering
-                if ((currentPosition - (Vector2)soundPosition).sqrMagnitude < 1f)
-                {
-                    moveDirection = directionToSound.x > 0 ? Vector2.right : Vector2.left;
-                }
-            }
+            moveDirection = AdjustDirectionForCover(moveDirection, directionToSound);
         }
 
-        // Set the field of view direction based on the guard's movement direction
-        if (moveDirection == Vector2.right)
+        // Apply repulsion force and normalize movement for diagonal directions
+        moveDirection += CalculateRepulsionForce(currentPosition);
+        moveDirection = moveDirection.normalized;
+
+        // Track direction changes
+        if (moveDirection != previousMoveDirection)
         {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Right);
-        }
-        else if (moveDirection == Vector2.left)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Left);
-        }
-        else if (moveDirection == Vector2.up)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Up);
-        }
-        else if (moveDirection == Vector2.down)
-        {
-            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Down);
+            directionChangeCount++;
+            previousMoveDirection = moveDirection;
         }
 
-        // Move in the selected direction
-        currentPosition = Vector2.MoveTowards(currentPosition, currentPosition + moveDirection, speed * Time.deltaTime);
-
-        // Update the transform position with the new calculated position
-        transform.position = new Vector3(currentPosition.x, currentPosition.y, transform.position.z);
-
-        // Check if the guard is stuck (no progress has been made)
-        if (currentPosition == lastPosition)
+        // Handle excessive direction changes
+        directionChangeTimer += Time.deltaTime;
+        if (directionChangeTimer >= directionChangeResetTime)
         {
-            // The guard hasn't moved, break out of the loop and try a different approach
+            directionChangeCount = 0;
+            directionChangeTimer = 0f;
+        }
+        if (directionChangeCount > 10)
+        {
+            Debug.Log("Guard is stuck due to frequent direction changes!");
             break;
         }
 
-        // Update lastPosition for the next iteration
-        lastPosition = currentPosition;
+        UpdateFieldOfViewDirection(moveDirection);
+        currentPosition = Vector2.MoveTowards(currentPosition, currentPosition + moveDirection, speed * Time.deltaTime);
+        transform.position = new Vector3(currentPosition.x, currentPosition.y, transform.position.z);
 
+        if (currentPosition == lastPosition)
+        {
+            Debug.Log("Guard is stuck, breaking loop.");
+            UpdateFieldOfViewDirection(moveDirection);
+            StartRoutineBasedOnGuardType();
+
+            break;
+        }
+
+        lastPosition = currentPosition;
         yield return null;
     }
 
-    // Call another method when the guard reaches the sound position
-   
     StartRoutineBasedOnGuardType();
 }
 
+// Helper to determine cardinal and diagonal directions
+private Vector2 GetCardinalDirection(Vector2 direction)
+{
+    float diagonalThreshold = 0f; // Threshold to consider diagonal directions
+
+    // Check if the direction is diagonal
+    if (Mathf.Abs(direction.x - direction.y) <= diagonalThreshold)
+    {
+        // Diagonal directions (when x and y are close enough to be considered diagonal)
+        if (direction.x > 0 && direction.y > 0)
+            return new Vector2(1, 1).normalized; // Up-Right diagonal
+        else if (direction.x > 0 && direction.y < 0)
+            return new Vector2(1, -1).normalized; // Down-Right diagonal
+        else if (direction.x < 0 && direction.y > 0)
+            return new Vector2(-1, 1).normalized; // Up-Left diagonal
+        else
+            return new Vector2(-1, -1).normalized; // Down-Left diagonal
+    }
+    else
+    {
+        // If x or y is stronger, treat it as cardinal direction
+        if (Mathf.Abs(direction.x) > Mathf.Abs(direction.y))
+        {
+            // Horizontal direction (stronger x component)
+            if (direction.x > 0)
+                return Vector2.right;
+            else
+                return Vector2.left;
+        }
+        else
+        {
+            // Vertical direction (stronger y component)
+            if (direction.y > 0)
+                return Vector2.up;
+            else
+                return Vector2.down;
+        }
+    }
+}
+
+
+
+
+// Adjust direction when close to cover
+private Vector2 AdjustDirectionForCover(Vector2 moveDirection, Vector2 directionToSound)
+{
+    if (moveDirection == Vector2.up || moveDirection == Vector2.down)
+        return directionToSound.x > 0 ? Vector2.right : Vector2.left;
+    else
+        return directionToSound.y > 0 ? Vector2.up : Vector2.down;
+}
+
+// Add repulsion force from nearby guards
+private Vector2 CalculateRepulsionForce(Vector2 currentPosition)
+{
+    Collider2D[] nearbyGuards = Physics2D.OverlapCircleAll(currentPosition, repulsionRadius, guardLayerMask);
+    Vector2 repulsionForce = Vector2.zero;
+
+    foreach (var guard in nearbyGuards)
+    {
+        if (guard.gameObject != gameObject)
+        {
+            Vector2 guardPosition = (Vector2)guard.transform.position;
+            Vector2 directionAway = (currentPosition - guardPosition).normalized;
+            float distanceToGuard = Vector2.Distance(currentPosition, guardPosition);
+            repulsionForce += directionAway / Mathf.Max(distanceToGuard, 0.1f);
+        }
+    }
+
+    return repulsionStrength * repulsionForce;
+}
+
+// Update field of view direction based on movement
+private void UpdateFieldOfViewDirection(Vector2 moveDirection)
+{
+    // Check if the move direction is primarily horizontal or vertical
+    if (Mathf.Abs(moveDirection.x) > Mathf.Abs(moveDirection.y))
+    {
+        // If moving mostly horizontally, set left or right
+        if (moveDirection.x > 0)
+        {
+            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Right);
+        }
+        else
+        {
+            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Left);
+        }
+    }
+    else if (Mathf.Abs(moveDirection.y) > Mathf.Abs(moveDirection.x))
+    {
+        // If moving mostly vertically, set up or down
+        if (moveDirection.y > 0)
+        {
+            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Up);
+        }
+        else
+        {
+            fieldOfView.SetFieldOfViewDirection(FieldOfView.FieldOfViewDirection.Down);
+        }
+    }
+}
 
 }

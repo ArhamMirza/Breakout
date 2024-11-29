@@ -24,14 +24,22 @@ public class PlayerControl : MonoBehaviour
 
     public LayerMask ignoreLayers; // Drag and drop the layer mask in the inspector
 
+    private SpriteRenderer spriteRenderer;
 
-    
+    [SerializeField] private Sprite upMovementSprite; // Assign this sprite in the Inspector
+
+    private Sprite originalSprite; // Store the original sprite
+
+
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         player = GetComponent<Player>();
+        spriteRenderer = GetComponent<SpriteRenderer>(); // Initialize SpriteRenderer
         detectionRadius = 8f;
+        originalSprite = spriteRenderer.sprite; // Store the original sprite
+
 
 
         if (throwRangeIndicator != null)
@@ -96,33 +104,57 @@ public class PlayerControl : MonoBehaviour
     }
 
 
-    private void HandleMovement()
+   private void HandleMovement()
+{
+    float moveHorizontal = 0f;
+    float moveVertical = 0f;
+
+    if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
+        moveHorizontal = -1f;
+    else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
+        moveHorizontal = 1f;
+
+    if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
+        moveVertical = 1f;
+    else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
+        moveVertical = -1f;
+
+    if (moveHorizontal != 0f) moveVertical = 0f;
+    else if (moveVertical != 0f) moveHorizontal = 0f;
+
+    Vector2 movement = new Vector2(moveHorizontal, moveVertical);
+
+    // Handle horizontal movement (left/right)
+    if (moveHorizontal < 0)
     {
-        float moveHorizontal = 0f;
-        float moveVertical = 0f;
-
-        if (Input.GetKey(KeyCode.A) || Input.GetKey(KeyCode.LeftArrow))
-            moveHorizontal = -1f;
-        else if (Input.GetKey(KeyCode.D) || Input.GetKey(KeyCode.RightArrow))
-            moveHorizontal = 1f;
-
-        if (Input.GetKey(KeyCode.W) || Input.GetKey(KeyCode.UpArrow))
-            moveVertical = 1f;
-        else if (Input.GetKey(KeyCode.S) || Input.GetKey(KeyCode.DownArrow))
-            moveVertical = -1f;
-
-        if (moveHorizontal != 0f) moveVertical = 0f;
-        else if (moveVertical != 0f) moveHorizontal = 0f;
-
-        Vector2 movement = new Vector2(moveHorizontal, moveVertical);
-
-        if (moveHorizontal < 0) player.SetDirection(Player.Direction.Left);
-        else if (moveHorizontal > 0) player.SetDirection(Player.Direction.Right);
-        else if (moveVertical > 0) player.SetDirection(Player.Direction.Up);
-        else if (moveVertical < 0) player.SetDirection(Player.Direction.Down);
-
-        rb.MovePosition(rb.position + movement * player.MoveSpeed * Time.deltaTime);
+        player.SetDirection(Player.Direction.Left);
+        spriteRenderer.flipX = true; // Flip sprite when moving left
+        spriteRenderer.sprite = originalSprite; // Revert to original sprite when moving horizontally
     }
+    else if (moveHorizontal > 0)
+    {
+        player.SetDirection(Player.Direction.Right);
+        spriteRenderer.flipX = false; // Reset sprite flip when moving right
+        spriteRenderer.sprite = originalSprite; // Revert to original sprite when moving horizontally
+    }
+
+    // Handle vertical movement (up/down)
+    else if (moveVertical > 0)
+    {
+        player.SetDirection(Player.Direction.Up);
+        spriteRenderer.sprite = upMovementSprite; // Use the sprite for upward movement
+    }
+    else if (moveVertical < 0)
+    {
+        player.SetDirection(Player.Direction.Down);
+        spriteRenderer.sprite = originalSprite; // Revert to the original sprite when moving down
+    }
+
+    // Move the player
+    rb.MovePosition(rb.position + movement * player.MoveSpeed * Time.deltaTime);
+}
+
+
 
     public Vector2 GetDirectionAsVector2()
     {
@@ -179,7 +211,6 @@ public class PlayerControl : MonoBehaviour
 
     // Store ray start and end positions for Gizmo drawing
     rayStartPosition = transform.position;
-    Debug.Log(hit.collider);
     
     if (hit.collider != null)
     {

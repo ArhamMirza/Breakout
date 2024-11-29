@@ -124,7 +124,6 @@ public class FieldOfView : MonoBehaviour
 {
     // Define a minimum threshold for wall or cover detection
     float detectionThreshold = 0f; // Can be adjusted based on your needs
-    Debug.Log(moveDirection);
 
     // Define the ray directions: straight, left, and right
     Vector2[] rayDirections = new Vector2[]
@@ -156,7 +155,6 @@ public class FieldOfView : MonoBehaviour
             {
                 // Ensure we treat very close walls/obstacles as valid detections
                 distanceToWall = hit.distance;
-                Debug.Log("Detected obstacle within threshold at distance: " + distanceToWall);
 
                 // Check for wall or cover and return the corresponding label
                 if (hit.collider.CompareTag("Wall"))
@@ -288,5 +286,10 @@ public class FieldOfView : MonoBehaviour
     public FieldOfViewDirection getDefaultDirection()
     {
         return defaultFieldOfViewDirection;
+    }
+
+    public FieldOfViewDirection getDirection()
+    {
+        return fieldOfViewDirection;
     }
 }
