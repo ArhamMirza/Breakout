@@ -91,49 +91,82 @@ public class Player : MonoBehaviour
     void Awake()
     {
         gameSceneManager = FindObjectOfType<GameSceneManager>();
-        currentScene = gameSceneManager.getCurrentScene();
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
-        stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
-        stairsBasementToGround = null;
-        stairsTopToGround = null;
-        if (Instance == null)
+        if (gameSceneManager == null)
         {
-            Instance = this;
-            DontDestroyOnLoad(gameObject); 
+            Debug.LogError("GameSceneManager not found.");
         }
         else
         {
+            currentScene = gameSceneManager.getCurrentScene();
+        }
+
+        spriteRenderer = GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("SpriteRenderer component not found.");
+        }
+
+        stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
+        if (stairsGroundToBasement == null)
+        {
+            Debug.LogError("Stairs_GroundToBasement not found.");
+        }
+
+        stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
+        if (stairsGroundToTop == null)
+        {
+            Debug.LogError("Stairs_GroundToTop not found.");
+        }
+
+        stairsBasementToGround = null;
+        stairsTopToGround = null;
+        if (Instance == null &&  FindObjectOfType<Player>())
+        {
+            if (stairsBasementToGround != null)
+            {
+                DontDestroyOnLoad(stairsBasementToGround);
+            }
+            if (stairsGroundToBasement != null)
+            {
+                DontDestroyOnLoad(stairsGroundToBasement);
+            }
+            if (stairsGroundToTop != null)
+            {
+                DontDestroyOnLoad(stairsGroundToTop);
+            }
+            if (stairsTopToGround != null)
+            {
+                DontDestroyOnLoad(stairsTopToGround);
+            }
+
+            if (inventory != null && inventory.gameObject != null)
+            {
+                DontDestroyOnLoad(inventory.gameObject);
+            }
+
+            if (alertnessAudioSource != null)
+            {
+                DontDestroyOnLoad(alertnessAudioSource);
+            }
+            Instance = this;
+            Debug.Log("Dont Destroy Player");
+            if(gameObject !=null)
+            {
+                DontDestroyOnLoad(gameObject); 
+            }
+        }
+        else
+        {
+            Debug.Log("Resetting Player");
+            if(gameObject != null)
+            {
             Destroy(gameObject); 
+
+            }
         }
     
        
-       if (stairsBasementToGround != null)
-        {
-            DontDestroyOnLoad(stairsBasementToGround);
-        }
-        if (stairsGroundToBasement != null)
-        {
-            DontDestroyOnLoad(stairsGroundToBasement);
-        }
-         if (stairsGroundToTop != null)
-        {
-            DontDestroyOnLoad(stairsGroundToTop);
-        }
-         if (stairsTopToGround != null)
-        {
-            DontDestroyOnLoad(stairsTopToGround);
-        }
-
-        if (inventory != null && inventory.gameObject != null)
-        {
-            DontDestroyOnLoad(inventory.gameObject);
-        }
-
-        if (alertnessAudioSource != null)
-        {
-            DontDestroyOnLoad(alertnessAudioSource);
-        }
+       
  
     }
 
@@ -190,7 +223,7 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            ShowCaughtPopup(); 
+            // ShowCaughtPopup(); 
         }
 
         alertnessSlider.value = alertness; 
@@ -342,7 +375,7 @@ public class Player : MonoBehaviour
         {
             alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
         }
-
+        
         Destroy(target);
     }
     private void PutOnDisguise()
@@ -481,8 +514,11 @@ public class Player : MonoBehaviour
             Destroy(Instance.gameObject); 
         }
 
+        if(PersistentCanvas.Instance !=null)
+        {
 
-        PersistentCanvas.Instance?.DestroyCanvas();
+            PersistentCanvas.Instance.DestroyCanvas();
+        }
 
         gameSceneManager.RestartScene();
 

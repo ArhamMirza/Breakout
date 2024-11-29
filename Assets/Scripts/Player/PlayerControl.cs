@@ -1,3 +1,5 @@
+using System.Collections;
+using System.Collections.Generic;
 using UnityEngine;
 
 public class PlayerControl : MonoBehaviour
@@ -13,12 +15,24 @@ public class PlayerControl : MonoBehaviour
 
     private float throwRange;
 
+    private float detectionRadius;
+
+    private Vector3 rayStartPosition; // Store the start position of the ray
+    private Vector3 rayEndPosition; // Store the end position of the ray
+    private bool rayHit = false; // Flag to indicate if the ray hit something
+    private Vector3 rayHitPoint; // Store the point where the ray hits
+
+    public LayerMask ignoreLayers; // Drag and drop the layer mask in the inspector
+
+
     
 
     void Start()
     {
         rb = GetComponent<Rigidbody2D>();
         player = GetComponent<Player>();
+        detectionRadius = 8f;
+
 
         if (throwRangeIndicator != null)
         {
@@ -63,6 +77,7 @@ public class PlayerControl : MonoBehaviour
             {
                 // ThrowObject(clickPosition);
                 Debug.Log("Throwing Object");
+                ThrowObject(clickPosition);
                 ToggleThrowMode();
             }
             else
@@ -76,7 +91,7 @@ public class PlayerControl : MonoBehaviour
     private Vector2 GetMouseWorldPosition2D()
     {
         Vector3 mousePos = Input.mousePosition;
-        mousePos.z = 0; // Not needed for 2D calculations
+        mousePos.z = 0;
         return Camera.main.ScreenToWorldPoint(mousePos);
     }
 
@@ -152,22 +167,107 @@ public class PlayerControl : MonoBehaviour
         return Camera.main.ScreenToWorldPoint(mousePos);
     }
 
-    private void ThrowObject(Vector3 target)
-    {
-        GameObject thrownObject = Instantiate(throwablePrefab, transform.position, Quaternion.identity);
-        Rigidbody2D rb = thrownObject.GetComponent<Rigidbody2D>();
+   private void ThrowObject(Vector3 target)
+{
+    // Calculate the direction and distance between the player and the target
+    Vector2 direction = (target - transform.position).normalized;
+    float distanceSquared = (target - transform.position).sqrMagnitude;
+    float distance = Mathf.Sqrt(distanceSquared)*0.8f; 
 
-        if (rb != null)
+    // Cast a ray to check for walls or obstacles in the path
+    RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distance, ~ignoreLayers); // ~ operator inverts the mask to ignore the player
+
+    // Store ray start and end positions for Gizmo drawing
+    rayStartPosition = transform.position;
+    Debug.Log(hit.collider);
+    
+    if (hit.collider != null)
+    {
+        // Ray hit something, check if it's an obstacle
+        if (hit.collider.CompareTag("Wall"))
         {
-            Vector2 throwDirection = (target - transform.position).normalized;
-            rb.AddForce(throwDirection * throwForce, ForceMode2D.Impulse);
+            Debug.Log("Throw path is blocked by a wall or obstacle.");
+            return; // If there's an obstacle, don't throw the object
         }
 
-        // Play sound (optional, if AudioSource is attached to the throwable prefab)
-        AudioSource audioSource = thrownObject.GetComponent<AudioSource>();
-        if (audioSource != null)
+    }
+    else
+    {
+        rayHit = false;
+        rayEndPosition = target; // If no hit, set the end position to the target
+    }
+
+    // Instantiate the thrown object at the player's position
+    GameObject thrownObject = Instantiate(throwablePrefab, transform.position, Quaternion.identity);
+    Rigidbody2D rb = thrownObject.GetComponent<Rigidbody2D>();
+
+    // Apply velocity to the thrown object if there's no obstacle
+    if (rb != null && (hit.collider == null || !hit.collider.CompareTag("Wall")))
+    {
+        Vector2 throwDirection = (target - transform.position).normalized;
+        rb.velocity = throwDirection * throwForce; // Apply velocity based on throwForce
+    }
+
+    // Start moving the object over time towards the target
+    if ((hit.collider == null || !hit.collider.CompareTag("Wall"))) // Only start moving if there's no obstacle
+    {
+        StartCoroutine(MoveObjectTowardsTarget(thrownObject, target));
+    }
+
+}
+
+
+// Coroutine to move the object towards the target and destroy it at the destination
+private IEnumerator MoveObjectTowardsTarget(GameObject thrownObject, Vector3 target)
+{
+    float startTime = Time.time;
+    float journeyLength = Vector3.Distance(thrownObject.transform.position, target);
+    float speed = throwForce; // Define the speed for the object
+
+    while (Vector3.Distance(thrownObject.transform.position, target) > 0.1f)
+    {
+        // Move the object towards the target at a fixed speed
+        float distanceCovered = (Time.time - startTime) * speed;
+        float fractionOfJourney = distanceCovered / journeyLength;
+
+        // Move the object smoothly towards the target
+        thrownObject.transform.position = Vector3.Lerp(thrownObject.transform.position, target, fractionOfJourney);
+
+        // Wait until the next frame before continuing the loop
+        yield return null;
+    }
+
+    // Once the object reaches the target, destroy it and play the sound
+    Destroy(thrownObject);
+    CreateSoundAtLocation(target);
+}
+
+
+// This method draws the Gizmos for the ray visualization in the Scene view
+// private void OnDrawGizmos()
+// {
+//     // Only draw the gizmos if the ray has been fired
+//     if (rayStartPosition != null)
+//     {
+//         Gizmos.color = rayHit ? Color.red : Color.green; // Red if hit, green if no hit
+//         Gizmos.DrawLine(rayStartPosition, rayHit ? rayHitPoint : rayEndPosition);
+//     }
+// }
+
+private void CreateSoundAtLocation(Vector3 position)
+{
+    // Notify all guards within a specific radius about the sound
+    Debug.Log("Checking detection");
+    Collider2D[] hitColliders = Physics2D.OverlapCircleAll(position, detectionRadius);
+    foreach (Collider2D hit in hitColliders)
+    {
+        GuardAI guard = hit.GetComponent<GuardAI>();
+        if (guard != null)
         {
-            audioSource.Play();
+            guard.OnSoundHeard(position);
+            Debug.Log("Guard alerted to sound");
         }
     }
+}
+
 }

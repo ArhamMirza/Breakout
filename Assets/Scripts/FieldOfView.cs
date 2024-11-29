@@ -1,6 +1,7 @@
 using System.Collections.Generic;
 using UnityEngine;
 
+[RequireComponent(typeof(LineRenderer))]
 public class FieldOfView : MonoBehaviour
 {
     public enum FieldOfViewDirection
@@ -25,12 +26,17 @@ public class FieldOfView : MonoBehaviour
     public bool targetDetected { get; private set; }
     private bool wallHit;
 
-    [SerializeField] private bool adjustToRotation = true; 
+    [SerializeField] private bool adjustToRotation = true;
 
     private GameObject player;
     private Player playerComponent;
-    
-    private Vector3[] rayDirections;  // Cached directions for raycasting
+
+    private Vector3[] rayDirections; // Cached directions for raycasting
+
+    private LineRenderer lineRenderer; // LineRenderer for drawing field of view
+
+    [SerializeField]  private LayerMask ignoreLayers; 
+
 
     void Start()
     {
@@ -43,6 +49,18 @@ public class FieldOfView : MonoBehaviour
         }
 
         CacheRayDirections();
+
+        // Initialize LineRenderer
+        lineRenderer = GetComponent<LineRenderer>();
+        lineRenderer.positionCount = rayCount + 2; // Include start and end points for a closed loop
+        lineRenderer.useWorldSpace = true;
+        lineRenderer.startWidth = 0.05f;
+        lineRenderer.endWidth = 0.05f;
+        lineRenderer.startColor = lineRenderer.endColor = new Color(173f / 255f, 216f / 255f, 230f / 255f);
+        lineRenderer.sortingOrder = 5; // Adjust sorting order as needed
+        lineRenderer.material = new Material(Shader.Find("Sprites/Default"));
+        Vector3 position = lineRenderer.transform.position;
+        lineRenderer.transform.position = new Vector3(position.x, position.y, position.z - 0.1f); // Ensure smaller Z offset
     }
 
     void Update()
@@ -50,8 +68,10 @@ public class FieldOfView : MonoBehaviour
         if (player != null && playerComponent != null)
         {
             DetectTarget();
+            DrawFieldOfView();
         }
     }
+
 
     void DetectTarget()
     {
@@ -99,6 +119,70 @@ public class FieldOfView : MonoBehaviour
         }
         return false;
     }
+
+    public string DetectWall(Vector3 startPosition, Vector2 moveDirection, float detectionRadius, out float distanceToWall)
+{
+    // Define a minimum threshold for wall or cover detection
+    float detectionThreshold = 0f; // Can be adjusted based on your needs
+    Debug.Log(moveDirection);
+
+    // Define the ray directions: straight, left, and right
+    Vector2[] rayDirections = new Vector2[]
+    {
+        moveDirection,                        // Straight ahead
+        Quaternion.Euler(0, 0, -5) * moveDirection,  // Left (perpendicular)
+        Quaternion.Euler(0, 0, 5) * moveDirection   // Right (perpendicular)
+    };
+
+    // Initialize a variable to store the closest distance
+    distanceToWall = Mathf.Infinity;
+    string detectedObject = "";
+
+    // Color for debugging rays
+    Color debugColor = Color.red;
+
+    // Iterate through each ray direction
+    foreach (var rayDirection in rayDirections)
+    {
+        // Draw the ray in the Scene view for visualization
+        Debug.DrawRay(startPosition, rayDirection * detectionRadius, debugColor);
+
+        RaycastHit2D hit = Physics2D.Raycast(startPosition, rayDirection, detectionRadius, obstructionMask & ~ignoreLayers);
+
+        if (hit.collider != null)
+        {
+            // Check if the distance to the detected obstacle is within the threshold
+            if (hit.distance < detectionThreshold)
+            {
+                // Ensure we treat very close walls/obstacles as valid detections
+                distanceToWall = hit.distance;
+                Debug.Log("Detected obstacle within threshold at distance: " + distanceToWall);
+
+                // Check for wall or cover and return the corresponding label
+                if (hit.collider.CompareTag("Wall"))
+                {
+                    detectedObject = "Wall"; // Detected wall
+                }
+                else if (hit.collider.CompareTag("Cover"))
+                {
+                    detectedObject = "Cover"; // Detected cover
+                }
+            }
+            else
+            {
+                // If the obstacle is further than the threshold, return the distance normally
+                if (hit.distance < distanceToWall)
+                {
+                    distanceToWall = hit.distance;
+                    detectedObject = hit.collider.CompareTag("Wall") ? "Wall" : hit.collider.CompareTag("Cover") ? "Cover" : "";
+                }
+            }
+        }
+    }
+
+    return detectedObject;
+}
+
 
     private void CacheRayDirections()
     {
@@ -158,30 +242,33 @@ public class FieldOfView : MonoBehaviour
         return direction;
     }
 
-    void OnDrawGizmos()
+    private void DrawFieldOfView()
     {
-        if (player == null) return; 
-
-        Gizmos.color = targetDetected ? Color.red : Color.yellow;
-        
         Vector3 offsetPosition = transform.position + GetBaseDirection() * -viewOffset;
-
-        Vector3 leftBoundary = DirFromAngle(-fieldOfViewAngle / 2) * detectionDistance;
-        Vector3 rightBoundary = DirFromAngle(fieldOfViewAngle / 2) * detectionDistance;
-
-        Gizmos.DrawLine(offsetPosition, offsetPosition + leftBoundary);
-        Gizmos.DrawLine(offsetPosition, offsetPosition + rightBoundary);
+        List<Vector3> points = new List<Vector3> { offsetPosition };
 
         float angleStep = fieldOfViewAngle / rayCount;
         for (int i = 0; i <= rayCount; i++)
         {
             float angle = -fieldOfViewAngle / 2 + i * angleStep;
-            Vector3 direction = DirFromAngle(angle) * detectionDistance;
-            Gizmos.DrawLine(offsetPosition, offsetPosition + direction);
+            Vector3 direction = DirFromAngle(angle);
+
+            RaycastHit2D hit = Physics2D.Raycast(offsetPosition, direction, detectionDistance, obstructionMask);
+            if (hit.collider != null)
+            {
+                points.Add(hit.point);
+            }
+            else
+            {
+                points.Add(offsetPosition + direction * detectionDistance);
+            }
         }
 
-        Gizmos.color = Color.red;
-        Gizmos.DrawWireSphere(offsetPosition, detectionDistance);
+        // Close the field of view by connecting the last ray to the first position
+        points.Add(offsetPosition);
+
+        lineRenderer.positionCount = points.Count;
+        lineRenderer.SetPositions(points.ToArray());
     }
 
     public void SetFieldOfViewDirection(FieldOfViewDirection newDirection)
@@ -191,5 +278,15 @@ public class FieldOfView : MonoBehaviour
             fieldOfViewDirection = newDirection;
             CacheRayDirections(); // Recompute ray directions if direction changes
         }
+    }
+
+    public LayerMask getObstructionMask()
+    {
+        return obstructionMask;
+    }
+
+    public FieldOfViewDirection getDefaultDirection()
+    {
+        return defaultFieldOfViewDirection;
     }
 }

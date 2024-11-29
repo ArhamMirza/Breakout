@@ -26,6 +26,7 @@ TagManager:
   - Item_Disguise
   - Item_Card
   - Save
+  - Window
   layers:
   - Default
   - TransparentFX
@@ -37,7 +38,7 @@ TagManager:
   - Player
   - Items
   - Cover
-  - 
+  - Guard
   - 
   - 
   - 
