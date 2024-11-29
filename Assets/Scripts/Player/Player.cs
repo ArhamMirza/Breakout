@@ -274,13 +274,7 @@ public class Player : MonoBehaviour
     {
         Debug.Log("Player crouching.");
 
-        // Squash the player from the top by reducing the Y-scale, while adjusting position
-        float originalYScale = transform.localScale.y;  // Save the original Y scale
-        transform.localScale = new Vector3(transform.localScale.x, originalYScale / 1.2f, transform.localScale.z);
-
-        // Move the player up to maintain the top position
-        Vector3 currentPosition = transform.position;
-        transform.position = new Vector3(currentPosition.x, currentPosition.y + (originalYScale - transform.localScale.y) / 2, currentPosition.z);
+        
 
         // Adjust player stats when crouching
         moveSpeed = defaultMoveSpeed / 2; 
@@ -291,13 +285,6 @@ public class Player : MonoBehaviour
     {
         Debug.Log("Player stopped crouching.");
 
-        // Restore the player's original scale
-        float originalYScale = transform.localScale.y * 1.2f;  // Restore to the original Y scale
-        transform.localScale = new Vector3(transform.localScale.x, originalYScale, transform.localScale.z);
-
-        // Move the player back to their original position
-        Vector3 currentPosition = transform.position;
-        transform.position = new Vector3(currentPosition.x, currentPosition.y - (originalYScale - transform.localScale.y) / 2, currentPosition.z);
 
         // Restore player stats to default values
         moveSpeed = defaultMoveSpeed; 

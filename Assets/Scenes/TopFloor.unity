@@ -296,6 +296,10 @@ PrefabInstance:
       propertyPath: defaultFieldOfViewDirection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard (6)
@@ -308,6 +312,22 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Stationary
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 4370251713233811175, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
@@ -366,6 +386,10 @@ PrefabInstance:
       propertyPath: defaultFieldOfViewDirection
       value: 1
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard (5)
@@ -378,6 +402,22 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Patrol
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     m_RemovedComponents: []
     m_RemovedGameObjects:
     - {fileID: 4370251713233811175, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
@@ -705,6 +745,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard (3)
@@ -713,6 +757,22 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: pauseDuration
       value: 3
@@ -5469,6 +5529,10 @@ PrefabInstance:
       propertyPath: m_LocalEulerAnglesHint.z
       value: 0
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard (2)
@@ -5477,6 +5541,22 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: lookAroundDirections.Array.size
       value: 4
@@ -5643,6 +5723,10 @@ PrefabInstance:
       propertyPath: defaultFieldOfViewDirection
       value: 3
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard
@@ -5651,6 +5735,22 @@ PrefabInstance:
       propertyPath: m_Layer
       value: 10
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: lookAroundDirections.Array.size
       value: 3
@@ -9482,6 +9582,10 @@ PrefabInstance:
       propertyPath: defaultFieldOfViewDirection
       value: 2
       objectReference: {fileID: 0}
+    - target: {fileID: 4177134790543280817, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: m_Sprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
     - target: {fileID: 4764550738042676789, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: m_Name
       value: Guard (4)
@@ -9494,6 +9598,22 @@ PrefabInstance:
       propertyPath: m_TagString
       value: Patrol
       objectReference: {fileID: 0}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: upSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 68176b98f0bbe2b4b9a6ff650deecca1, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: downSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: bb76f1b642d26aa4c907ca918eb06136, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: leftSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: b005491ebe19d46409feccadeea1e84e, type: 3}
+    - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
+      propertyPath: rightSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: 75067c3c44bebb4488bb8154c200c228, type: 3}
     - target: {fileID: 4946500643933353627, guid: 9d5a12123242fc748ab962e386ae1e11, type: 3}
       propertyPath: patrolLength
       value: 7
