@@ -4,7 +4,7 @@ using UnityEngine.UI;
 
 public class Inventory : MonoBehaviour
 {
-    private Dictionary<string, int> items = new Dictionary<string, int>();
+    public Dictionary<string, int> items = new Dictionary<string, int>();
     public Dictionary<string, Sprite> itemSprites = new Dictionary<string, Sprite>();
 
     public GameObject inventoryItemPrefab;  

@@ -106,27 +106,39 @@ public class GuardAI : MonoBehaviour
         }
     }
 
-    private void HandlePlayerDetection()
+   private void HandlePlayerDetection()
+{
+    Vector2 directionToPlayer = player.position - transform.position;
+    float distanceToPlayer = directionToPlayer.sqrMagnitude;  // Using squared magnitude to avoid unnecessary sqrt
+    Vector2 normalizedDirection = directionToPlayer.normalized;
+
+    // Calculate the dot product to determine how aligned the player is with the NPC's forward direction
+    float angleToPlayer = Mathf.Abs(Vector2.Dot(normalizedDirection, transform.right));
+
+   
+    float alertnessFactor = Mathf.Pow(angleToPlayer, 2);  // Square to heavily reduce at the sides
+
+    // Calculate alertness increase if the player is within line of sight
+    if (angleToPlayer > 0.5f && Mathf.Abs(directionToPlayer.y) < 0.5f && !playerScript.DisguiseOn)
     {
-        Vector2 directionToPlayer = player.position - transform.position;
-        float distanceToPlayer = directionToPlayer.magnitude;
-        bool isPlayerInLineOfSight = Mathf.Abs(directionToPlayer.x) < 0.5f || Mathf.Abs(directionToPlayer.y) < 0.5f;
-
-        if (isPlayerInLineOfSight && !playerScript.DisguiseOn)
-        {
-            playerScript.SetAlertness(100);
-        }
-        else
-        {
-            float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
-            playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
-        }
-
-        if (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
-        {
-            FacePlayerDirection();
-        }
+        float alertnessIncrease = Mathf.Lerp(10, 100, alertnessFactor); // More gradual increase when aligned
+        playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
     }
+    else
+    {
+        float alertnessIncrease = Mathf.Lerp(0.01f, 0.1f, angleToPlayer);  // Almost no increase at the sides
+        alertnessIncrease *= Mathf.Max(1f / (distanceToPlayer + 1f), 0.01f);  // Further reduced with distance
+
+        playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
+    }
+
+    if (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
+    {
+        FacePlayerDirection();
+    }
+}
+
+
 
     private void HandleUncrouchedMovementAlertness()
 {
@@ -140,7 +152,7 @@ public class GuardAI : MonoBehaviour
         float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(detectionRadiusSqr - distanceToPlayerSqr));
         float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;
 
-        float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease * 2f, 80);
+        float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease, 80);
         playerScript.SetAlertness(newAlertness);
 
         if (newAlertness > 33)
@@ -234,12 +246,11 @@ public class GuardAI : MonoBehaviour
             timer += Time.deltaTime;
 
             // Debug log to monitor the timer
-            Debug.Log("Timer: " + timer);
+            // Debug.Log("Timer: " + timer);
 
             // If the timer exceeds 5 seconds, restore the direction and stop the coroutine
             if (timer >= 5f)
             {
-                Debug.Log("Resetting to default direction");
                 fieldOfView.SetFieldOfViewDirection(defaultDirection);
                 yield break; // Exit the coroutine
             }

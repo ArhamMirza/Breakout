@@ -68,7 +68,7 @@ public class FieldOfView : MonoBehaviour
         if (player != null && playerComponent != null)
         {
             DetectTarget();
-            DrawFieldOfView();
+            // DrawFieldOfView();
         }
     }
 

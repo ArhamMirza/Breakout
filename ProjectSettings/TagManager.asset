@@ -30,6 +30,7 @@ TagManager:
   - Item_Rope
   - Item_Bottle
   - NPC_Janitor
+  - securityCamera
   layers:
   - Default
   - TransparentFX
@@ -42,7 +43,7 @@ TagManager:
   - Items
   - Cover
   - Guard
-  - 
+  - Camera
   - 
   - 
   - 

@@ -16,6 +16,9 @@ public class Janitor : MonoBehaviour
     private int selectedChoice = 0;  // Index of the currently selected choice
     private bool isDialogueActive = false;
     private bool inputBlocked = false;
+    private PlayerControl playerControl;
+
+    private Player player;
 
     private string openingDialogue = "Hey there! Looks like you escaped from your cell. Let me know what you need help with.";
     private List<string> hints = new List<string>
@@ -30,7 +33,10 @@ public class Janitor : MonoBehaviour
 
     private void Start()
 {
-    // Dynamically find the Canvas
+    playerControl = FindObjectOfType<PlayerControl>();
+    player = FindObjectOfType<Player>();
+
+
     GameObject canvasObject = GameObject.Find("Canvas");
     if (canvasObject == null)
     {
@@ -79,7 +85,6 @@ public class Janitor : MonoBehaviour
 
     
 }
-
 
     private void Update()
     {
@@ -222,6 +227,17 @@ private IEnumerator ShowCraftDialogue()
 
     yield return new WaitForSeconds(1f);
 
+    // Check if the player has at least 2 electronic parts
+    if (player.inventory.HasItem("Part") && player.inventory.items["Part"] >= 2)
+    {
+        dialogueText.text = "Great! You have the parts. Let's craft the device!";
+        Debug.Log("Player has enough parts to craft the device.");
+    }
+    else
+    {
+        dialogueText.text = "You don't have enough electronic parts. Please bring me 2 parts.";
+        Debug.Log("Player doesn't have enough parts.");
+    }
 
     // Wait for player to press Enter
     inputBlocked = false;
@@ -229,8 +245,12 @@ private IEnumerator ShowCraftDialogue()
 
     // Proceed after Enter is pressed
     dialoguePanel.SetActive(false);
-    ShowChoiceMenu(); // Return to the choices menu
+
+    ShowChoiceMenu(); // Show the choices menu for crafting
+   
+   
 }
+
 
 
     private void FreezeGame(bool freeze)
@@ -240,10 +260,9 @@ private IEnumerator ShowCraftDialogue()
 
     // Optionally disable player movement or other systems
     // Example: Assuming you have a PlayerController script
-    PlayerControl player = FindObjectOfType<PlayerControl>();
-    if (player != null)
+    if (playerControl != null)
     {
-        player.enabled = !freeze; // Disable movement when frozen
+        playerControl.enabled = !freeze; // Disable movement when frozen
     }
 
     // Dim the background or stop animations visually, if needed

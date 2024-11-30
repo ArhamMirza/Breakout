@@ -24,6 +24,8 @@ public class PlayerControl : MonoBehaviour
 
     public LayerMask ignoreLayers; // Drag and drop the layer mask in the inspector
 
+    public LayerMask cameraLayer;
+
     private SpriteRenderer spriteRenderer;
 
     [SerializeField] private Sprite upMovementSprite; // Assign this sprite in the Inspector
@@ -67,6 +69,11 @@ public class PlayerControl : MonoBehaviour
         {
             Debug.Log("Interacting");
             InteractWithEnvironment();
+        }
+        if (Input.GetKeyDown(KeyCode.R))
+        {
+            Debug.Log("Enabling Device");
+            DisableDevice(player.transform.position);
         }
 
         // Throwing
@@ -181,6 +188,43 @@ public class PlayerControl : MonoBehaviour
                 player.Interact(hit.collider.gameObject);
             }
         }
+    }
+
+    public void DisableDevice(Vector3 devicePosition)
+    {
+        // Log the device position for debugging
+        Debug.Log("Device Position: " + devicePosition);
+
+        // Convert the device position to 2D (only using x and y)
+        Vector2 devicePosition2D = new Vector2(devicePosition.x, devicePosition.y);
+
+        // Find all colliders in the disable radius using a circle (2D check)
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(devicePosition2D, 12f, cameraLayer);
+
+        if (hitColliders.Length > 0)
+        {
+            // Disable the first camera found
+            GameObject cameraObject = hitColliders[0].gameObject;
+            SecurityCamera securityCamera = cameraObject.GetComponent<SecurityCamera>();
+
+            if (securityCamera != null)
+            {
+                Debug.Log("Camera disabled");
+                StartCoroutine(DisableCameraForSeconds(securityCamera, 5f));
+            }
+        }
+        else
+        {
+            Debug.Log("No colliders found in the radius.");
+        }
+    }
+
+
+    private System.Collections.IEnumerator DisableCameraForSeconds(SecurityCamera camera, float duration)
+    {
+        camera.Disable(); // Call the disable method on the camera
+        yield return new WaitForSeconds(duration);
+        camera.Enable();  // Re-enable the camera after the duration
     }
 
     private void ToggleThrowMode()
