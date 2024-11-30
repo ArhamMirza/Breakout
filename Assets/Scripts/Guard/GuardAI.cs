@@ -129,25 +129,27 @@ public class GuardAI : MonoBehaviour
     }
 
     private void HandleUncrouchedMovementAlertness()
+{
+    Vector2 directionToPlayer = player.position - transform.position;
+    float distanceToPlayerSqr = directionToPlayer.sqrMagnitude;
+    float detectionRadiusSqr = detectionRadius * detectionRadius;
+
+    if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching && !playerScript.DisguiseOn)
     {
-        Vector2 directionToPlayer = player.position - transform.position;
-        float distanceToPlayerSqr = directionToPlayer.sqrMagnitude;
-        float detectionRadiusSqr = detectionRadius * detectionRadius;
+        // Calculate distance factor without using Mathf.Sqrt
+        float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(detectionRadiusSqr - distanceToPlayerSqr));
+        float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;
 
-        if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching && !playerScript.DisguiseOn)
+        float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease * 2f, 80);
+        playerScript.SetAlertness(newAlertness);
+
+        if (newAlertness > 33)
         {
-            float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(distanceToPlayerSqr));
-            float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;
-
-            float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease*2f,80);
-            playerScript.SetAlertness(newAlertness);
-
-            if (newAlertness > 33)
-            {
-                FacePlayerDirection();
-            }
+            FacePlayerDirection();
         }
     }
+}
+
 
     private void ManageAlertState()
     {
@@ -349,7 +351,6 @@ public class GuardAI : MonoBehaviour
         Vector2 directionToSound = (Vector2)soundPosition - currentPosition;
         Vector2 moveDirection = GetCardinalDirection(directionToSound);
 
-        // Avoid obstacles and add repulsion
         string detectionResult = fieldOfView.DetectWall(new Vector3(currentPosition.x, currentPosition.y, transform.position.z), moveDirection, detectionRadius, out float distanceToWall);
         if (detectionResult == "Wall" && distanceToWall < 1f)
         {
@@ -360,8 +361,6 @@ public class GuardAI : MonoBehaviour
             moveDirection = AdjustDirectionForCover(moveDirection, directionToSound);
         }
 
-        // Apply repulsion force and normalize movement for diagonal directions
-        moveDirection += CalculateRepulsionForce(currentPosition);
         moveDirection = moveDirection.normalized;
 
         // Track direction changes
@@ -456,25 +455,6 @@ private Vector2 AdjustDirectionForCover(Vector2 moveDirection, Vector2 direction
         return directionToSound.y > 0 ? Vector2.up : Vector2.down;
 }
 
-// Add repulsion force from nearby guards
-private Vector2 CalculateRepulsionForce(Vector2 currentPosition)
-{
-    Collider2D[] nearbyGuards = Physics2D.OverlapCircleAll(currentPosition, repulsionRadius, guardLayerMask);
-    Vector2 repulsionForce = Vector2.zero;
-
-    foreach (var guard in nearbyGuards)
-    {
-        if (guard.gameObject != gameObject)
-        {
-            Vector2 guardPosition = (Vector2)guard.transform.position;
-            Vector2 directionAway = (currentPosition - guardPosition).normalized;
-            float distanceToGuard = Vector2.Distance(currentPosition, guardPosition);
-            repulsionForce += directionAway / Mathf.Max(distanceToGuard, 0.1f);
-        }
-    }
-
-    return repulsionStrength * repulsionForce;
-}
 
 // Update field of view direction based on movement
 private void UpdateFieldOfViewDirection(Vector2 moveDirection)

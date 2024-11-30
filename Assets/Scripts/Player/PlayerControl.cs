@@ -255,7 +255,7 @@ private IEnumerator MoveObjectTowardsTarget(GameObject thrownObject, Vector3 tar
     float journeyLength = Vector3.Distance(thrownObject.transform.position, target);
     float speed = throwForce; // Define the speed for the object
 
-    while (Vector3.Distance(thrownObject.transform.position, target) > 0.1f)
+    while ((thrownObject.transform.position - target).sqrMagnitude > 1f)
     {
         // Move the object towards the target at a fixed speed
         float distanceCovered = (Time.time - startTime) * speed;

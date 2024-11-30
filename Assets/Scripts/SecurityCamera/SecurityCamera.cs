@@ -27,9 +27,11 @@ public class SecurityCamera : MonoBehaviour
     private void HandlePlayerDetection()
     {
         Vector2 directionToPlayer = player.position - transform.position;
-        float distanceToPlayer = directionToPlayer.magnitude;
+        float distanceToPlayerSqr = directionToPlayer.sqrMagnitude;
 
-        float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayer, 1f);
+        // Avoid square root by using squared distance
+        float alertnessIncrease = alertnessIncreaseRate / Mathf.Max(distanceToPlayerSqr, 1f);
         playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
     }
+
 }

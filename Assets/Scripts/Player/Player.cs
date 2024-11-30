@@ -362,9 +362,27 @@ public class Player : MonoBehaviour
     // Handle NPC interaction
     private void HandleNPCInteraction(GameObject target)
     {
+        // Extract NPC type from the tag
         string npcType = target.tag.Substring(4); 
         Debug.Log("Talking to NPC: " + npcType);
+
+        // Check if the NPC is the Janitor
+        if (npcType == "Janitor")
+        {
+            // Call a method on the Janitor script to handle the interaction
+            Janitor janitorScript = target.GetComponent<Janitor>();
+            if (janitorScript != null)
+            {
+                janitorScript.StartInteraction(); // Trigger Janitor's interaction logic
+                Debug.Log("Interacting with Janitor");
+            }
+            else
+            {
+                Debug.LogWarning("Janitor script not found on the NPC!");
+            }
+        }
     }
+
 
     // Handle item interaction
     private void HandleItemInteraction(GameObject target)

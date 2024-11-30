@@ -29,6 +29,7 @@ TagManager:
   - Window
   - Item_Rope
   - Item_Bottle
+  - NPC_Janitor
   layers:
   - Default
   - TransparentFX
