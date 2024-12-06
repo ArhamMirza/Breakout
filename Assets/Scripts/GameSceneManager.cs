@@ -10,6 +10,11 @@ public class GameSceneManager : MonoBehaviour
     private string currentScene;
     private string lastEnteredVent;
     private Transform spawnVent1;
+    private string currentGateway;
+
+    private bool powerOff;
+
+    private GameObject blackoutScreen;
 
     private void Awake()
     {
@@ -29,6 +34,37 @@ public class GameSceneManager : MonoBehaviour
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
         Player player = FindObjectOfType<Player>();  
+
+        if(powerOff)
+        {
+
+            GameObject blackout = GameObject.Find("BlackOut");
+            
+            if (blackout == null) 
+            {
+                // Search all objects (including inactive ones)
+                GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+                foreach (GameObject obj in allObjects)
+                {
+                    if (obj.name == "BlackOut")
+                    {
+                        blackout = obj;
+                        break;
+                    }
+                }
+            }
+
+            if (blackout != null)
+            {
+                blackout.SetActive(true); // Enable the GameObject
+                Debug.Log("BlackOut GameObject activated.");
+            }
+            else
+            {
+                Debug.LogError("BlackOut GameObject not found!");
+            }
+        }
+
 
         if (player == null)
         {
@@ -53,33 +89,101 @@ public class GameSceneManager : MonoBehaviour
         }
         else if (scene.name == "Basement" && lastScene == "GroundFloor")
         {
-            Transform basementSpawn = GameObject.Find("Spawn_GroundToBasement").transform;
-            playerTransform.position = basementSpawn.position;
+            Transform spawn = GameObject.Find("Spawn_GroundToBasement").transform;
+            playerTransform.position = spawn.position;
             currentScene = scene.name;
 
         }
         else if (scene.name == "GroundFloor" && lastScene == "Basement")
         {
-            Transform basementSpawn = GameObject.Find("Spawn_BasementToGround").transform;
-            playerTransform.position = basementSpawn.position;
+            Transform spawn = GameObject.Find("Spawn_BasementToGround").transform;
+            playerTransform.position = spawn.position;
             currentScene = scene.name;
 
         }
         else if (scene.name == "TopFloor" && lastScene == "GroundFloor")
         {
-            Transform basementSpawn = GameObject.Find("Spawn_GroundToTop").transform;
-            playerTransform.position = basementSpawn.position;
+            Transform spawn = GameObject.Find("Spawn_GroundToTop").transform;
+            playerTransform.position = spawn.position;
             currentScene = scene.name;
 
         }
         else if (scene.name == "GroundFloor" && lastScene == "TopFloor")
         {
-            Transform basementSpawn = GameObject.Find("Spawn_TopToGround").transform;
-            playerTransform.position = basementSpawn.position;
+            Transform spawn = GameObject.Find("Spawn_TopToGround").transform;
+            playerTransform.position = spawn.position;
             currentScene = scene.name;
 
         }
+        else if (scene.name == "Outside" && lastScene == "TopFloor")
+        {
+            Transform spawn;
+            if (currentGateway == "Window_1")
+            {
+                spawn = GameObject.Find("Spawn_WindowToOut1").transform;
+
+            }
+            else if (currentGateway == "Window_2")
+            {
+                spawn = GameObject.Find("Spawn_WindowToOut2").transform;
+            }
+            else
+            {
+                spawn = null;
+            }
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        }
+        else if (scene.name == "TopFloor" && lastScene == "Outside")
+        {
+            Transform spawn;
+            if (currentGateway == "Window_1")
+            {
+                spawn = GameObject.Find("Spawn_Window1").transform;
+
+            }
+            else if (currentGateway == "Window_2")
+            {
+                spawn = GameObject.Find("Spawn_Window2").transform;
+            }
+            else
+            {
+                spawn = null;
+            }
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        }
+        else if (scene.name == "Outside" && lastScene == "Vents")
+        {
+            Transform spawn = GameObject.Find("Spawn_VentToOut").transform;
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        }
+        else if (scene.name == "Vents" && lastScene == "Outside")
+        {
+            Transform spawn = GameObject.Find("Spawn_OutToVent").transform;
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        } 
+        else if (scene.name == "GroundFloor" && lastScene == "Outside")
+        {
+            Transform spawn = GameObject.Find("Spawn_OutsideToGround").transform;
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        } 
+        else if (scene.name == "Outside" && lastScene == "GroundFloor")
+        {
         
+            Transform spawn = GameObject.Find("Spawn_GroundToOutside").transform;
+            playerTransform.position = spawn.position;
+            currentScene = scene.name;
+
+        } 
 
         if (lastScene != scene.name)
         {
@@ -95,6 +199,11 @@ public class GameSceneManager : MonoBehaviour
     void OnDisable()
     {
         SceneManager.sceneLoaded -= OnSceneLoaded;  
+    }
+
+    public void TurnOffPower()
+    {
+        powerOff = true;
     }
 
     public void SetLastEnteredVent(string ventName)
@@ -123,7 +232,13 @@ public class GameSceneManager : MonoBehaviour
 
     public void RoomTransition(Transform playerTransform, GameObject gateway, string room)
     {
-       
+        currentGateway = gateway.name;
+        if (currentGateway == "Window_1" || currentGateway == "Window_2")
+        {
+            SceneManager.LoadScene(room, LoadSceneMode.Single);
+            return;
+
+        }
         if ((playerTransform.position - gateway.transform.position).sqrMagnitude <= 0.5)
         {
             SceneManager.LoadScene(room, LoadSceneMode.Single);

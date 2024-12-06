@@ -21,8 +21,6 @@ public class GuardAI : MonoBehaviour
 
     private SpriteRenderer spriteRenderer;
 
-
-
     private Transform player;
     private Player playerScript;
     private Vector2 originalPosition;
@@ -44,7 +42,6 @@ public class GuardAI : MonoBehaviour
     public Sprite upSprite;    // Assign this in the Inspector
     public Sprite downSprite;  
     private FieldOfView.FieldOfViewDirection previousDirection;
-
 
 
 
@@ -118,18 +115,17 @@ public class GuardAI : MonoBehaviour
    
     float alertnessFactor = Mathf.Pow(angleToPlayer, 2);  // Square to heavily reduce at the sides
 
-    // Calculate alertness increase if the player is within line of sight
-    if (angleToPlayer > 0.5f && Mathf.Abs(directionToPlayer.y) < 0.5f && !playerScript.DisguiseOn)
+    if ((angleToPlayer > 0.5f && Mathf.Abs(directionToPlayer.y) < 0.5f && !playerScript.DisguiseOn))
     {
-        float alertnessIncrease = Mathf.Lerp(10, 100, alertnessFactor); // More gradual increase when aligned
-        playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
+        float alertnessIncrease = 1f; // More gradual increase when aligned or in proximity
+        playerScript.IncreaseAlertness(alertnessIncrease);
     }
+
     else
     {
-        float alertnessIncrease = Mathf.Lerp(0.01f, 0.1f, angleToPlayer);  // Almost no increase at the sides
-        alertnessIncrease *= Mathf.Max(1f / (distanceToPlayer + 1f), 0.01f);  // Further reduced with distance
+        float alertnessIncrease = 2f*(Mathf.Max(1f / (distanceToPlayer + 1f), 0.01f));  // Further reduced with distance
 
-        playerScript.IncreaseAlertness(alertnessIncrease * Time.deltaTime);
+        playerScript.IncreaseAlertness(alertnessIncrease);
     }
 
     if (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
@@ -148,8 +144,7 @@ public class GuardAI : MonoBehaviour
 
     if (distanceToPlayerSqr <= detectionRadiusSqr && playerScript.IsMoving && !playerScript.IsCrouching && !playerScript.DisguiseOn)
     {
-        // Calculate distance factor without using Mathf.Sqrt
-        float distanceFactor = Mathf.Max(1f, detectionRadius - Mathf.Sqrt(detectionRadiusSqr - distanceToPlayerSqr));
+        float distanceFactor = Mathf.Max(1f, detectionRadius - detectionRadiusSqr - distanceToPlayerSqr);
         float adjustedAlertnessIncrease = alertnessIncreaseRate * distanceFactor * Time.deltaTime;
 
         float newAlertness = Mathf.Min(playerScript.GetAlertness() + adjustedAlertnessIncrease, 80);
@@ -350,7 +345,7 @@ public class GuardAI : MonoBehaviour
     float squaredDistanceToSound = (currentPosition - (Vector2)soundPosition).sqrMagnitude;
     if (squaredDistanceToSound <= 16f)
     {
-        Vector2 directionToSound = (Vector2)soundPosition - currentPosition;
+        Vector2 directionToSound = ((Vector2)soundPosition - currentPosition).normalized;
         Vector2 moveDirection = GetCardinalDirection(directionToSound);
         UpdateFieldOfViewDirection(moveDirection);
         StartRoutineBasedOnGuardType();
@@ -359,7 +354,7 @@ public class GuardAI : MonoBehaviour
 
     while ((currentPosition - (Vector2)soundPosition).sqrMagnitude > 2f)
     {
-        Vector2 directionToSound = (Vector2)soundPosition - currentPosition;
+        Vector2 directionToSound = ((Vector2)soundPosition - currentPosition).normalized;
         Vector2 moveDirection = GetCardinalDirection(directionToSound);
 
         string detectionResult = fieldOfView.DetectWall(new Vector3(currentPosition.x, currentPosition.y, transform.position.z), moveDirection, detectionRadius, out float distanceToWall);
@@ -402,7 +397,7 @@ public class GuardAI : MonoBehaviour
         {
             Debug.Log("Guard is stuck, breaking loop.");
             UpdateFieldOfViewDirection(moveDirection);
-            StartRoutineBasedOnGuardType();
+            currentRoutine = StartCoroutine(Stationary());
 
             break;
         }
@@ -411,7 +406,9 @@ public class GuardAI : MonoBehaviour
         yield return null;
     }
 
-    StartRoutineBasedOnGuardType();
+    // StartRoutineBasedOnGuardType();
+    currentRoutine = StartCoroutine(Stationary());
+
 }
 
 // Helper to determine cardinal and diagonal directions

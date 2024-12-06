@@ -28,7 +28,8 @@ public class Janitor : MonoBehaviour
         "The security camera in the room at the far left can be disabled with a device that I can build. However, I require 2 electronic parts.",
         "Check inside boxes for items.",
         "You can save your game by interacting with objects resembling a typewriter.",
-        "The card for opening the power door is located on the top floor. However, you will need a disguise to get past so many guards."
+        "You can use ropes to get out of windows.",
+        "The card for opening the power door is located on the top floor in the chief's room. However, you will need a disguise to get past so many guards."
     };
 
     private void Start()

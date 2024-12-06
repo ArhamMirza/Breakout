@@ -32,14 +32,6 @@ public class Player : MonoBehaviour
     private bool isAlertnessIncreasing = false; 
     private float timeSinceLastIncrease = 0f; 
 
-    // Alertness UI Settings
-    [Header("Alertness UI Settings")]
-    [SerializeField] private Color lowAlertnessColor = Color.green;
-    [SerializeField] private Color mediumAlertnessColor = Color.yellow;
-    [SerializeField] private Color highAlertnessColor = Color.red;
-    [SerializeField] private Slider alertnessSlider; 
-    [SerializeField] private Image fillImage; 
-
     // Audio Settings
     [Header("Audio Settings")]
     [SerializeField] private AudioSource alertnessAudioSource; 
@@ -58,25 +50,34 @@ public class Player : MonoBehaviour
 
     // Gameplay Objects
     [Header("Gameplay Objects")]
-    [SerializeField] private GameObject caughtPopup; 
-    [SerializeField] private Button restartButton; 
-    [SerializeField] private Button quitButton; 
+    
     private GameObject stairsBasementToGround; 
     private GameObject stairsGroundToBasement; 
     private GameObject stairsGroundToTop;
     private GameObject stairsTopToGround; 
+    private GameObject stairsOutsideToGround;
+    private GameObject stairsGroundToOutside;
+
+
  
 
     private GameSceneManager gameSceneManager;
+
+    private UIManager uiManager;
+
+    [SerializeField] private Sprite upMovementSprite; // Assign this sprite in the Inspector
+
     [SerializeField] private Sprite disguiseSprite; // New sprite for the disguise
+
+    [SerializeField] private Sprite disguiseSpriteBack;
     private SpriteRenderer spriteRenderer; // Reference to the SpriteRenderer component
 
     private bool disguiseOn;
 
+    private Sprite originalSprite; // Store the original sprite
+
+
     
-
-
-
 
     // Direction Settings
     public enum Direction
@@ -89,123 +90,153 @@ public class Player : MonoBehaviour
     public Direction currentDirection = Direction.Down; 
 
     void Awake()
+{
+    gameSceneManager = FindObjectOfType<GameSceneManager>();
+    uiManager = FindObjectOfType<UIManager>();
+    spriteRenderer = GetComponent<SpriteRenderer>();
+    originalSprite = spriteRenderer.sprite;
+
+    if (gameSceneManager == null)
     {
-        gameSceneManager = FindObjectOfType<GameSceneManager>();
-        if (gameSceneManager == null)
-        {
-            Debug.LogError("GameSceneManager not found.");
-        }
-        else
-        {
-            currentScene = gameSceneManager.getCurrentScene();
-        }
-
-        spriteRenderer = GetComponent<SpriteRenderer>();
-        if (spriteRenderer == null)
-        {
-            Debug.LogError("SpriteRenderer component not found.");
-        }
-
-        stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
-        if (stairsGroundToBasement == null)
-        {
-            Debug.LogError("Stairs_GroundToBasement not found.");
-        }
-
-        stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
-        if (stairsGroundToTop == null)
-        {
-            Debug.LogError("Stairs_GroundToTop not found.");
-        }
-
-        stairsBasementToGround = null;
-        stairsTopToGround = null;
-        if (Instance == null &&  FindObjectOfType<Player>())
-        {
-            if (stairsBasementToGround != null)
-            {
-                DontDestroyOnLoad(stairsBasementToGround);
-            }
-            if (stairsGroundToBasement != null)
-            {
-                DontDestroyOnLoad(stairsGroundToBasement);
-            }
-            if (stairsGroundToTop != null)
-            {
-                DontDestroyOnLoad(stairsGroundToTop);
-            }
-            if (stairsTopToGround != null)
-            {
-                DontDestroyOnLoad(stairsTopToGround);
-            }
-
-            if (inventory != null && inventory.gameObject != null)
-            {
-                DontDestroyOnLoad(inventory.gameObject);
-            }
-
-            if (alertnessAudioSource != null)
-            {
-                DontDestroyOnLoad(alertnessAudioSource);
-            }
-            Instance = this;
-            Debug.Log("Dont Destroy Player");
-            if(gameObject !=null)
-            {
-                DontDestroyOnLoad(gameObject); 
-            }
-        }
-        else
-        {
-            Debug.Log("Resetting Player");
-            if(gameObject != null)
-            {
-            Destroy(gameObject); 
-
-            }
-        }
-    
-       
-       
- 
+        Debug.LogError("GameSceneManager not found.");
     }
+    else
+    {
+        currentScene = gameSceneManager.getCurrentScene();
+    }
+
+    if (spriteRenderer == null)
+    {
+        Debug.LogError("SpriteRenderer component not found.");
+    }
+
+    stairsGroundToBasement = GameObject.Find("Stairs_GroundToBasement");
+    if (stairsGroundToBasement == null)
+    {
+        Debug.LogError("Stairs_GroundToBasement not found.");
+    }
+
+    stairsGroundToTop = GameObject.Find("Stairs_GroundToTop");
+    if (stairsGroundToTop == null)
+    {
+        Debug.LogError("Stairs_GroundToTop not found.");
+    }
+    stairsGroundToOutside = GameObject.Find("Stairs_GroundToOutside");
+    if (stairsGroundToTop == null)
+    {
+        Debug.LogError("Stairs_GroundToOutside not found.");
+    }
+
+    stairsBasementToGround = null;
+    stairsTopToGround = null;
+    stairsOutsideToGround = null;
+    if (Instance == null && FindObjectOfType<Player>())
+    {
+        if (stairsBasementToGround != null)
+        {
+            DontDestroyOnLoad(stairsBasementToGround);
+        }
+        if (stairsGroundToBasement != null)
+        {
+            DontDestroyOnLoad(stairsGroundToBasement);
+        }
+        if (stairsGroundToTop != null)
+        {
+            DontDestroyOnLoad(stairsGroundToTop);
+        }
+        if (stairsGroundToOutside != null)
+        {
+            DontDestroyOnLoad(stairsGroundToOutside);
+        }
+        if (stairsOutsideToGround != null)
+        {
+            DontDestroyOnLoad(stairsOutsideToGround);
+        }
+        if (stairsTopToGround != null)
+        {
+            DontDestroyOnLoad(stairsTopToGround);
+        }
+
+        if (inventory != null && inventory.gameObject != null)
+        {
+            DontDestroyOnLoad(inventory.gameObject);
+        }
+
+        if (alertnessAudioSource != null)
+        {
+            DontDestroyOnLoad(alertnessAudioSource);
+        }
+        Instance = this;
+        Debug.Log("Dont Destroy Player");
+        if (gameObject != null)
+        {
+            DontDestroyOnLoad(gameObject);
+        }
+    }
+    else
+    {
+        Debug.Log("Resetting Player");
+        if (gameObject != null)
+        {
+            Destroy(gameObject);
+        }
+    }
+
+    // Load disguise state from JSON and set the sprite accordingly
+    LoadPlayer();
+    SetInitialSprite();
+}
+
+private void SetInitialSprite()
+{
+    if (disguiseOn)
+    {
+        spriteRenderer.sprite = disguiseSprite; // Set disguise sprite
+    }
+    else
+    {
+        spriteRenderer.sprite = originalSprite; // Set original sprite
+    }
+
+    // Optionally set initial direction
+    SetDirection(Direction.Right); // or any default direction you prefer
+}
+
+
 
     void Start()
     {
         alertness = 0f;
-        alertnessSlider.value = alertness; 
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
-        disguiseOn = false;
 
-        
         if (inventory == null)
         {
             inventory = GetComponent<Inventory>();
         }
 
-        defaultAlertnessMultiplier = alertnessMultiplier;
-        defaultExponentialFactor = exponentialFactor;
-
         interactionHandlers = new Dictionary<string, System.Action<GameObject>>()
         {
             { "Window", HandleWindowInteraction },
+            { "Power", HandlePowerInteraction },
             { "Save", HandleSaveInteraction},
             { "NPC_", HandleNPCInteraction },
             { "Item_", HandleItemInteraction },
             { "Door_", HandleDoorInteraction },
             { "Vent1", target => HandleVentInteraction("Vent1", target) }, 
             { "Vent2", target => HandleVentInteraction("Vent2", target) } ,
+            { "Vent3", target => HandleVentInteraction("Vent3", target) },  
             { "Vent4", target => HandleVentInteraction("Vent4", target) }  
 
         };
-        fillImage = alertnessSlider.fillRect.GetComponent<Image>();
+        // fillImage = alertnessSlider.fillRect.GetComponent<Image>();
 
-        caughtPopup.SetActive(false);
+        // caughtPopup.SetActive(false);
 
-        restartButton.onClick.AddListener(RestartGame);
-        quitButton.onClick.AddListener(QuitGame);
+        // restartButton.onClick.AddListener(RestartGame);
+        // quitButton.onClick.AddListener(QuitGame);
     }
+
 
     void Update()
     {
@@ -226,8 +257,7 @@ public class Player : MonoBehaviour
             // ShowCaughtPopup(); 
         }
 
-        alertnessSlider.value = alertness; 
-        UpdateSliderColor(alertness);
+        uiManager.UpdateSliderColor(alertness);
 
         if (alertness > maxAlertness * 0.66f)
         {
@@ -241,6 +271,7 @@ public class Player : MonoBehaviour
         {
             gameSceneManager.RoomTransition(transform, stairsGroundToBasement, "Basement");
             gameSceneManager.RoomTransition(transform, stairsGroundToTop, "TopFloor");
+            gameSceneManager.RoomTransition(transform, stairsGroundToOutside, "Outside");
 
         }
         else if(gameSceneManager.getCurrentScene() == "Basement")
@@ -263,6 +294,16 @@ public class Player : MonoBehaviour
             gameSceneManager.RoomTransition(transform, stairsTopToGround, "GroundFloor");
 
         }
+        else if(gameSceneManager.getCurrentScene() == "Outside")
+        {
+            if(stairsOutsideToGround == null)
+            {
+                stairsOutsideToGround = GameObject.Find("Stairs_OutsideToGround");
+            }
+
+            gameSceneManager.RoomTransition(transform, stairsOutsideToGround, "GroundFloor");
+
+        }
     }
 
     // Toggle crouch
@@ -274,12 +315,9 @@ public class Player : MonoBehaviour
     {
         Debug.Log("Player crouching.");
 
-        
-
         // Adjust player stats when crouching
         moveSpeed = defaultMoveSpeed / 2; 
-        exponentialFactor = 0.5f;
-        alertnessMultiplier = 0.75f;
+       
     }
     else
     {
@@ -288,8 +326,7 @@ public class Player : MonoBehaviour
 
         // Restore player stats to default values
         moveSpeed = defaultMoveSpeed; 
-        exponentialFactor = defaultExponentialFactor;
-        alertnessMultiplier = defaultAlertnessMultiplier;
+     
     }
 }
 
@@ -352,11 +389,55 @@ public class Player : MonoBehaviour
         if (inventory.HasItem("Rope"))
         {
             Debug.Log("You can escape through the window!");
+            gameSceneManager.SetLastScene();
+
+            lastScene = gameSceneManager.GetLastScene();
+
+            if (lastScene == "TopFloor")
+            {
+                gameSceneManager.RoomTransition(transform, target, "Outside");
+            }
+            else if (lastScene == "Outside")
+            {
+                gameSceneManager.RoomTransition(transform, target, "TopFloor");
+            }
         }
         else
         {
             Debug.Log("Cannot escape, no rope in inventory.");
         }
+    }
+
+    private void HandlePowerInteraction(GameObject target)
+    {
+        Debug.Log("Power Shut down!");
+        GameObject blackout = GameObject.Find("BlackOut");
+        
+        if (blackout == null) 
+        {
+            // Search all objects (including inactive ones)
+            GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
+            foreach (GameObject obj in allObjects)
+            {
+                if (obj.name == "BlackOut")
+                {
+                    blackout = obj;
+                    break;
+                }
+            }
+        }
+
+        if (blackout != null)
+        {
+            blackout.SetActive(true); // Enable the GameObject
+            Debug.Log("BlackOut GameObject activated.");
+        }
+        else
+        {
+            Debug.LogError("BlackOut GameObject not found!");
+        }
+        gameSceneManager.TurnOffPower();
+    
     }
 
     // Handle NPC interaction
@@ -424,6 +505,24 @@ public class Player : MonoBehaviour
     private void HandleDoorInteraction(GameObject target)
     {
         string doorType = target.tag.Substring(5); 
+        if(doorType == "OneSide")
+        {
+            GameObject openDoorSide = GameObject.FindWithTag("OpenDoorThisSide");
+            Debug.Log(openDoorSide);
+
+            if ((transform.position - openDoorSide.transform.position).sqrMagnitude <= 0.5f)
+            {
+                
+                Debug.Log("Opened door!");
+                Destroy(target);
+                
+            }
+            else
+            {
+                Debug.Log("Door does not open from this side");
+            }
+            return;
+        }
         if (inventory.HasItem(doorType))
         {
             Debug.Log($"Unlocked door with {doorType}!");
@@ -455,6 +554,10 @@ public class Player : MonoBehaviour
                 gameSceneManager.LoadScene("Vents");
                 // SceneManager.LoadScene("Vents", LoadSceneMode.Single);
             }
+            else if(lastEnteredVent == "Vent3")
+            {
+                gameSceneManager.LoadScene("Outside");
+            }
             else
             {   
                 gameSceneManager.LoadScene("GroundFloor");
@@ -476,7 +579,7 @@ public class Player : MonoBehaviour
 
     public void IncreaseAlertness(float amount)
     {
-        float increaseAmount = baseAlertnessIncrease * alertnessMultiplier * Mathf.Pow(exponentialFactor, amount);
+        float increaseAmount = baseAlertnessIncrease * alertnessMultiplier * Mathf.Pow(amount,exponentialFactor);
         alertness += increaseAmount;
         alertness = Mathf.Clamp(alertness, 0, maxAlertness);
         isAlertnessIncreasing = true;
@@ -486,7 +589,53 @@ public class Player : MonoBehaviour
     public void SetDirection(Direction direction)
     {
         currentDirection = direction;
+
+        if (disguiseOn)
+        {
+            switch (direction)
+            {
+                case Direction.Left:
+                    spriteRenderer.flipX = true; // Flip sprite for left movement
+                    spriteRenderer.sprite = disguiseSprite; // Use disguise sprite
+                    break;
+                case Direction.Right:
+                    spriteRenderer.flipX = false; // Reset sprite flip for right movement
+                    spriteRenderer.sprite = disguiseSprite; // Use disguise sprite
+                    break;
+                case Direction.Up:
+                    spriteRenderer.flipX = false; // No flipping for up movement
+                    spriteRenderer.sprite = disguiseSpriteBack; // Use back disguise sprite
+                    break;
+                case Direction.Down:
+                    spriteRenderer.flipX = false; // No flipping for down movement
+                    spriteRenderer.sprite = disguiseSprite; // Use front disguise sprite
+                    break;
+            }
+        }
+        else
+        {
+            switch (direction)
+            {
+                case Direction.Left:
+                    spriteRenderer.flipX = true; // Flip sprite for left movement
+                    spriteRenderer.sprite = originalSprite; // Use original sprite
+                    break;
+                case Direction.Right:
+                    spriteRenderer.flipX = false; // Reset sprite flip for right movement
+                    spriteRenderer.sprite = originalSprite; // Use original sprite
+                    break;
+                case Direction.Up:
+                    spriteRenderer.flipX = false; // No flipping for up movement
+                    spriteRenderer.sprite = upMovementSprite; // Use upward movement sprite
+                    break;
+                case Direction.Down:
+                    spriteRenderer.flipX = false; // No flipping for down movement
+                    spriteRenderer.sprite = originalSprite; // Use original sprite
+                    break;
+            }
+        }
     }
+
 
     private void UpdateAlertness(float deltaTime)
     {
@@ -503,75 +652,11 @@ public class Player : MonoBehaviour
         }
     }
 
-    private void UpdateSliderColor(float currentAlertness)
-    {
-        if (currentAlertness <= maxAlertness * 0.33f)
-        {
-            fillImage.color = lowAlertnessColor;
-        }
-        else if (currentAlertness <= maxAlertness * 0.66f)
-        {
-            fillImage.color = mediumAlertnessColor;
-        }
-        else
-        {
-            fillImage.color = highAlertnessColor;
-        }
-    }
-
-    private void ShowCaughtPopup()
-    {
-        caughtPopup.SetActive(true); 
-        Time.timeScale = 0; 
-    }
-
-    // Restart the game
-   private void RestartGame()
-    {
-        Time.timeScale = 1; 
-
-        if (alertnessAudioSource != null)
-        {
-            Destroy(alertnessAudioSource.gameObject); 
-        }
-        
-        if (Instance != null)
-        {
-            Destroy(Instance.gameObject); 
-        }
-
-        if(PersistentCanvas.Instance !=null)
-        {
-
-            PersistentCanvas.Instance.DestroyCanvas();
-        }
-
-        gameSceneManager.RestartScene();
-
-        // GameSceneManager.SceneManager.LoadScene(GameSceneManager.SceneManager.GetActiveScene().buildIndex);
-    }
-
-
-    // Quit the game
-    private void QuitGame()
-    {
-        Time.timeScale = 1; 
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false; 
-        #else
-        Application.Quit(); 
-        #endif
-    }
 
     public void SavePlayer()
     {
         PlayerData data = new PlayerData
         {
-            moveSpeed = moveSpeed,
-            isCrouching = isCrouching,
-            alertness = alertness,
-            alertnessMultiplier = alertnessMultiplier,
-            exponentialFactor = exponentialFactor,
             disguiseOn = disguiseOn,
             currentScene = currentScene,
             lastScene = lastScene,
@@ -593,14 +678,7 @@ public class Player : MonoBehaviour
         if (File.Exists(path))
         {
             string json = File.ReadAllText(path);
-            PlayerData data = JsonUtility.FromJson<PlayerData>(json);
-
-            // Restore player state
-            moveSpeed = data.moveSpeed;
-            isCrouching = data.isCrouching;
-            alertness = data.alertness;
-            alertnessMultiplier = data.alertnessMultiplier;
-            exponentialFactor = data.exponentialFactor;
+            PlayerData data = JsonUtility.FromJson<PlayerData>(json);           
             disguiseOn = data.disguiseOn;
             currentScene = data.currentScene;
             lastScene = data.lastScene;

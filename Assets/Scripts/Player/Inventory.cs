@@ -90,10 +90,27 @@ public class Inventory : MonoBehaviour
             if (parts.Length == 2 && int.TryParse(parts[1], out int count))
             {
                 items[parts[0]] = count;
+
+                // Ensure sprite for the item is loaded into the itemSprites dictionary
+                if (!itemSprites.ContainsKey(parts[0]))
+                {
+                    // Load the sprite if it's not already loaded
+                    Sprite itemSprite = Resources.Load<Sprite>("Sprites/" + parts[0]);
+                    if (itemSprite != null)
+                    {
+                        itemSprites[parts[0]] = itemSprite;
+                    }
+                    else
+                    {
+                        Debug.LogWarning("Sprite for item " + parts[0] + " not found.");
+                    }
+                }
             }
         }
 
+        // After deserialization, update the UI to reflect the changes
         UpdateInventoryUI();
     }
+
 
 }

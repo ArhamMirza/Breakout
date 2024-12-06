@@ -17,4 +17,7 @@ EditorBuildSettings:
   - enabled: 1
     path: Assets/Scenes/TopFloor.unity
     guid: bae8dbcf3f9159548903784f3d1ac47d
+  - enabled: 1
+    path: Assets/Scenes/Outside.unity
+    guid: 722e45baf3c07aa4696406b4e16e5457
   m_configObjects: {}
