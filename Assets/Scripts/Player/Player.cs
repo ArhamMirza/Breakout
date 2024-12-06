@@ -59,8 +59,6 @@ public class Player : MonoBehaviour
     private GameObject stairsGroundToOutside;
 
 
- 
-
     private GameSceneManager gameSceneManager;
 
     private UIManager uiManager;
@@ -89,7 +87,7 @@ public class Player : MonoBehaviour
     }
     public Direction currentDirection = Direction.Down; 
 
-    void Awake()
+   void Awake()
 {
     gameSceneManager = FindObjectOfType<GameSceneManager>();
     uiManager = FindObjectOfType<UIManager>();
@@ -121,8 +119,9 @@ public class Player : MonoBehaviour
     {
         Debug.LogError("Stairs_GroundToTop not found.");
     }
+
     stairsGroundToOutside = GameObject.Find("Stairs_GroundToOutside");
-    if (stairsGroundToTop == null)
+    if (stairsGroundToOutside == null)
     {
         Debug.LogError("Stairs_GroundToOutside not found.");
     }
@@ -130,54 +129,34 @@ public class Player : MonoBehaviour
     stairsBasementToGround = null;
     stairsTopToGround = null;
     stairsOutsideToGround = null;
-    if (Instance == null && FindObjectOfType<Player>())
+
+    // Singleton logic
+    if (Instance == null)
     {
-        if (stairsBasementToGround != null)
-        {
-            DontDestroyOnLoad(stairsBasementToGround);
-        }
-        if (stairsGroundToBasement != null)
-        {
-            DontDestroyOnLoad(stairsGroundToBasement);
-        }
-        if (stairsGroundToTop != null)
-        {
-            DontDestroyOnLoad(stairsGroundToTop);
-        }
-        if (stairsGroundToOutside != null)
-        {
-            DontDestroyOnLoad(stairsGroundToOutside);
-        }
-        if (stairsOutsideToGround != null)
-        {
-            DontDestroyOnLoad(stairsOutsideToGround);
-        }
-        if (stairsTopToGround != null)
-        {
-            DontDestroyOnLoad(stairsTopToGround);
-        }
-
-        if (inventory != null && inventory.gameObject != null)
-        {
-            DontDestroyOnLoad(inventory.gameObject);
-        }
-
-        if (alertnessAudioSource != null)
-        {
-            DontDestroyOnLoad(alertnessAudioSource);
-        }
         Instance = this;
-        Debug.Log("Dont Destroy Player");
-        if (gameObject != null)
+
+        if (FindObjectOfType<Player>())
         {
             DontDestroyOnLoad(gameObject);
+
+            // Preserve other objects
+            if (stairsBasementToGround != null) DontDestroyOnLoad(stairsBasementToGround);
+            if (stairsGroundToBasement != null) DontDestroyOnLoad(stairsGroundToBasement);
+            if (stairsGroundToTop != null) DontDestroyOnLoad(stairsGroundToTop);
+            if (stairsGroundToOutside != null) DontDestroyOnLoad(stairsGroundToOutside);
+            if (stairsOutsideToGround != null) DontDestroyOnLoad(stairsOutsideToGround);
+            if (stairsTopToGround != null) DontDestroyOnLoad(stairsTopToGround);
+            if (inventory != null && inventory.gameObject != null) DontDestroyOnLoad(inventory.gameObject);
+            if (alertnessAudioSource != null) DontDestroyOnLoad(alertnessAudioSource);
+
+            Debug.Log("Dont Destroy Player");
         }
     }
     else
     {
-        Debug.Log("Resetting Player");
         if (gameObject != null)
         {
+            Debug.Log("Resetting Player");
             Destroy(gameObject);
         }
     }
@@ -186,6 +165,7 @@ public class Player : MonoBehaviour
     LoadPlayer();
     SetInitialSprite();
 }
+
 
 private void SetInitialSprite()
 {

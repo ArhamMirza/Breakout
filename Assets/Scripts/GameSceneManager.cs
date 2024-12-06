@@ -1,5 +1,7 @@
 using UnityEngine;
 using UnityEngine.SceneManagement;
+using System.Collections;
+using System.Collections.Generic;
 
 public class GameSceneManager : MonoBehaviour
 {
@@ -15,6 +17,12 @@ public class GameSceneManager : MonoBehaviour
     private bool powerOff;
 
     private GameObject blackoutScreen;
+
+    private bool cutsceneEnd = false;
+
+    public Vector3 storedPosition;
+
+
 
     private void Awake()
     {
@@ -33,7 +41,19 @@ public class GameSceneManager : MonoBehaviour
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
     {
-        Player player = FindObjectOfType<Player>();  
+        Player[] players = FindObjectsOfType<Player>();
+        Player player;
+
+        if (players.Length > 1)
+        {
+            // Retrieve the first player in the array
+             player = players[1];
+        }
+        else
+        {
+            player = FindObjectOfType<Player>();
+
+        }
 
         if(powerOff)
         {
@@ -73,6 +93,14 @@ public class GameSceneManager : MonoBehaviour
         }
 
         Transform playerTransform = player.transform; 
+
+        if(!cutsceneEnd)
+        {
+            StartCoroutine(FadeToGroundFloor(playerTransform));  // Start fade effect
+            cutsceneEnd = true;
+
+        }
+
 
         if (scene.name == "Vents" && lastScene != "Vents")
         {
@@ -189,6 +217,10 @@ public class GameSceneManager : MonoBehaviour
         {
             lastScene = scene.name;
         }
+
+        storedPosition = playerTransform.position;
+        
+
     }
 
     void OnEnable()
@@ -257,4 +289,54 @@ public class GameSceneManager : MonoBehaviour
     {
         return lastScene;
     }
+
+    private IEnumerator FadeToGroundFloor(Transform playerTransform)
+{
+    // Find and activate the FadeOut object (assumes it's already in the scene)
+    GameObject fadeOut = GameObject.Find("FadeOut");
+    if (fadeOut != null)
+    {
+        fadeOut.SetActive(true);
+
+        // Get the SpriteRenderer or CanvasGroup for fading
+        SpriteRenderer spriteRenderer = fadeOut.GetComponent<SpriteRenderer>();
+        if (spriteRenderer == null)
+        {
+            Debug.LogError("FadeOut object doesn't have a SpriteRenderer component!");
+            yield break;
+        }
+
+        // Start with full opacity
+        Color startColor = spriteRenderer.color;
+        startColor.a = 1f;  // Set opacity to 1 (fully visible)
+        spriteRenderer.color = startColor;
+
+        // Gradually decrease the opacity over time (fade out)
+        float fadeDuration = 2f;  // Duration of the fade effect
+        float startTime = Time.time;
+
+        while (Time.time - startTime < fadeDuration)
+        {
+            float lerpFactor = (Time.time - startTime) / fadeDuration;
+            Color newColor = spriteRenderer.color;
+            newColor.a = Mathf.Lerp(1f, 0f, lerpFactor);  // Fade from 1 to 0
+            spriteRenderer.color = newColor;
+
+            yield return null;  // Wait until next frame
+        }
+
+        // Ensure the opacity is fully 0 after the fade
+        Color finalColor = spriteRenderer.color;
+        finalColor.a = 0f;
+        spriteRenderer.color = finalColor;
+    }
+
+ 
+    // Deactivate fade-out after the transition
+    if (fadeOut != null)
+    {
+        fadeOut.SetActive(false);
+    }
+}
+
 }
