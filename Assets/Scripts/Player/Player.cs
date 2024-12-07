@@ -74,6 +74,13 @@ public class Player : MonoBehaviour
 
     private Sprite originalSprite; // Store the original sprite
 
+    [SerializeField] private Sprite crouchSprite;
+
+    private ItemStateManager itemStateManager;
+
+    private Animator animator;
+
+
 
     
 
@@ -91,6 +98,17 @@ public class Player : MonoBehaviour
 {
     gameSceneManager = FindObjectOfType<GameSceneManager>();
     uiManager = FindObjectOfType<UIManager>();
+    GameObject itemManagerObject = GameObject.Find("ItemStateManager");
+
+    if (itemManagerObject != null)
+    {
+        itemStateManager = itemManagerObject.GetComponent<ItemStateManager>();
+    }
+    else
+    {
+        Debug.LogError("ItemManager GameObject not found!");
+    }
+    
     spriteRenderer = GetComponent<SpriteRenderer>();
     originalSprite = spriteRenderer.sprite;
 
@@ -189,6 +207,8 @@ private void SetInitialSprite()
         alertness = 0f;
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
+        animator = GetComponent<Animator>();
+
 
         if (inventory == null)
         {
@@ -286,10 +306,21 @@ private void SetInitialSprite()
         }
     }
 
+    // void LateUpdate()
+    // {
+    //     if(isCrouching)
+    //     {
+    //         spriteRenderer.sprite = crouchSprite;
+    //         originalSprite = crouchSprite;
+    //     }
+        
+    // }
+
     // Toggle crouch
     public void ToggleCrouch()
 {
     isCrouching = !isCrouching;
+    animator.SetBool("isCrouching", isCrouching);
 
     if (isCrouching)
     {
@@ -297,6 +328,7 @@ private void SetInitialSprite()
 
         // Adjust player stats when crouching
         moveSpeed = defaultMoveSpeed / 2; 
+
        
     }
     else
@@ -308,7 +340,9 @@ private void SetInitialSprite()
         moveSpeed = defaultMoveSpeed; 
      
     }
+
 }
+
 
     public float MoveSpeed
     {
@@ -368,7 +402,7 @@ private void SetInitialSprite()
     {
         if (inventory.HasItem("Rope"))
         {
-            Debug.Log("You can escape through the window!");
+            uiManager.ShowMessageAndPause("You can escape through the window!");
             gameSceneManager.SetLastScene();
 
             lastScene = gameSceneManager.GetLastScene();
@@ -384,13 +418,13 @@ private void SetInitialSprite()
         }
         else
         {
-            Debug.Log("Cannot escape, no rope in inventory.");
+            uiManager.ShowMessageAndPause("Cannot escape, no rope in inventory.");
         }
     }
 
     private void HandlePowerInteraction(GameObject target)
     {
-        Debug.Log("Power Shut down!");
+        uiManager.ShowMessageAndPause("Power Shut down!");
         GameObject blackout = GameObject.Find("BlackOut");
         
         if (blackout == null) 
@@ -449,12 +483,20 @@ private void SetInitialSprite()
     private void HandleItemInteraction(GameObject target)
     {
         string itemType = target.tag.Substring(5);
-        if(itemType == "Disguise")
+
+        if (itemType == "Disguise")
         {
             PutOnDisguise();
             Destroy(target);
+            ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+
+            // Send message to UIManager
+            uiManager.ShowMessageAndPause("Disguise acquired!");
+
             return;
-        } 
+        }
+
+        // For other items
         inventory.AddItem(itemType);
         Debug.Log("Picked up item: " + itemType);
 
@@ -462,9 +504,15 @@ private void SetInitialSprite()
         {
             alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
         }
-        
+
         Destroy(target);
+        ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+
+        // Send message to UIManager
+        uiManager.ShowMessageAndPause("Picked up item: " + itemType);
     }
+
+
     private void PutOnDisguise()
     {
         if (disguiseSprite != null && spriteRenderer != null)
@@ -485,6 +533,7 @@ private void SetInitialSprite()
     private void HandleDoorInteraction(GameObject target)
     {
         string doorType = target.tag.Substring(5); 
+        
         if(doorType == "OneSide")
         {
             GameObject openDoorSide = GameObject.FindWithTag("OpenDoorThisSide");
@@ -492,34 +541,45 @@ private void SetInitialSprite()
 
             if ((transform.position - openDoorSide.transform.position).sqrMagnitude <= 0.5f)
             {
-                
                 Debug.Log("Opened door!");
+                uiManager.ShowMessageAndPause("Door Opened!");
                 Destroy(target);
-                
+                ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
             }
             else
             {
-                Debug.Log("Door does not open from this side");
+                uiManager.ShowMessageAndPause("Door does not open from this side");
             }
+            
             return;
         }
+
         if (inventory.HasItem(doorType))
         {
-            Debug.Log($"Unlocked door with {doorType}!");
+            uiManager.ShowMessageAndPause($"Unlocked door with {doorType}!");
+            
+            // If the item used is a lockpick, remove it from the inventory
+            if (doorType == "Lockpick") 
+            {
+                inventory.RemoveItem(doorType); // Assuming RemoveItem is a method in your inventory class
+            }
+
             Destroy(target);
+            ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
         }
         else
         {
-            Debug.Log($"Door requires {doorType} to unlock.");
+            uiManager.ShowMessageAndPause($"Door requires {doorType} to unlock.");
         }
     }
+
 
     // Handle vent interation
     private void HandleVentInteraction(string ventId, GameObject target)
     {
         if (inventory.HasItem("Screwdriver"))
         {
-            Debug.Log($"{ventId} opened with screwdriver.");
+            // uiManager.ShowMessageAndPause($"{ventId} opened with screwdriver.");
 
             lastEnteredVent = ventId;
 
@@ -546,7 +606,7 @@ private void SetInitialSprite()
         }
         else
         {
-            Debug.Log($"Cannot open {ventId} without a screwdriver.");
+            // uiManager.ShowMessageAndPause($"Cannot open {ventId} without a screwdriver.");
         }
     }
 
@@ -567,54 +627,36 @@ private void SetInitialSprite()
     }
 
     public void SetDirection(Direction direction)
-    {
-        currentDirection = direction;
+{
+    currentDirection = direction;
 
-        if (disguiseOn)
-        {
-            switch (direction)
-            {
-                case Direction.Left:
-                    spriteRenderer.flipX = true; // Flip sprite for left movement
-                    spriteRenderer.sprite = disguiseSprite; // Use disguise sprite
-                    break;
-                case Direction.Right:
-                    spriteRenderer.flipX = false; // Reset sprite flip for right movement
-                    spriteRenderer.sprite = disguiseSprite; // Use disguise sprite
-                    break;
-                case Direction.Up:
-                    spriteRenderer.flipX = false; // No flipping for up movement
-                    spriteRenderer.sprite = disguiseSpriteBack; // Use back disguise sprite
-                    break;
-                case Direction.Down:
-                    spriteRenderer.flipX = false; // No flipping for down movement
-                    spriteRenderer.sprite = disguiseSprite; // Use front disguise sprite
-                    break;
-            }
-        }
-        else
-        {
-            switch (direction)
-            {
-                case Direction.Left:
-                    spriteRenderer.flipX = true; // Flip sprite for left movement
-                    spriteRenderer.sprite = originalSprite; // Use original sprite
-                    break;
-                case Direction.Right:
-                    spriteRenderer.flipX = false; // Reset sprite flip for right movement
-                    spriteRenderer.sprite = originalSprite; // Use original sprite
-                    break;
-                case Direction.Up:
-                    spriteRenderer.flipX = false; // No flipping for up movement
-                    spriteRenderer.sprite = upMovementSprite; // Use upward movement sprite
-                    break;
-                case Direction.Down:
-                    spriteRenderer.flipX = false; // No flipping for down movement
-                    spriteRenderer.sprite = originalSprite; // Use original sprite
-                    break;
-            }
-        }
+    // Determine which sprite to use based on the current direction
+    Sprite targetSprite = originalSprite; // Default to original sprite
+    if (disguiseOn)
+    {
+        targetSprite = disguiseSprite; // Use disguise sprite when disguise is on
     }
+    
+    // Handle sprite flipping and setting
+    switch (direction)
+    {
+        case Direction.Left:
+            spriteRenderer.flipX = true; // Flip sprite for left movement
+            spriteRenderer.sprite = targetSprite; // Use target sprite
+            break;
+
+        case Direction.Right:
+            spriteRenderer.flipX = false; // Reset sprite flip for right movement
+            spriteRenderer.sprite = targetSprite; // Use target sprite
+            break;
+
+        case Direction.Up:
+            break;
+
+        case Direction.Down:
+            break;
+    }
+}
 
 
     private void UpdateAlertness(float deltaTime)
@@ -642,6 +684,7 @@ private void SetInitialSprite()
             lastScene = lastScene,
             lastEnteredVent = lastEnteredVent,
             inventoryItems = inventory.SerializeInventory(),
+            destroyedItems = ItemStateManager.Instance.SerializeDestroyedItems(),
             currentDirection = currentDirection.ToString(),
             positionX = transform.position.x,
             positionY = transform.position.y,
@@ -650,36 +693,38 @@ private void SetInitialSprite()
 
         string json = JsonUtility.ToJson(data, true);
         File.WriteAllText(Application.persistentDataPath + "/playerSave.json", json);
-        Debug.Log("Game Saved: " + Application.persistentDataPath + "/playerSave.json");
+        uiManager.ShowMessageAndPause("Game Saved!");
     }
     public void LoadPlayer()
+{
+    string path = Application.persistentDataPath + "/playerSave.json";
+    if (File.Exists(path))
     {
-        string path = Application.persistentDataPath + "/playerSave.json";
-        if (File.Exists(path))
-        {
-            string json = File.ReadAllText(path);
-            PlayerData data = JsonUtility.FromJson<PlayerData>(json);           
-            disguiseOn = data.disguiseOn;
-            currentScene = data.currentScene;
-            lastScene = data.lastScene;
-            lastEnteredVent = data.lastEnteredVent;
-            currentDirection = Enum.TryParse(data.currentDirection, out Direction direction)
-                ? direction
-                : Direction.Down;
+        string json = File.ReadAllText(path);
+        PlayerData data = JsonUtility.FromJson<PlayerData>(json);
 
-            // Restore inventory
-            inventory.DeserializeInventory(data.inventoryItems);
+        disguiseOn = data.disguiseOn;
+        currentScene = data.currentScene;
+        lastScene = data.lastScene;
+        lastEnteredVent = data.lastEnteredVent;
+        currentDirection = Enum.TryParse(data.currentDirection, out Direction direction)
+            ? direction
+            : Direction.Down;
 
-            // Restore position
-            transform.position = new Vector3(data.positionX, data.positionY, data.positionZ);
+        // Restore inventory
+        inventory.DeserializeInventory(data.inventoryItems);
 
-            Debug.Log("Game Loaded");
-        }
-        else
-        {
-            Debug.LogWarning("Save file not found");
-        }
+        // Restore destroyed items
+        transform.position = new Vector3(data.positionX, data.positionY, data.positionZ);
+        itemStateManager.DeserializeDestroyedItems(data.destroyedItems); 
+
+        Debug.Log("Game Loaded");
     }
+    else
+    {
+        Debug.LogWarning("Save file not found");
+    }
+}
 
 
-}  
+} 

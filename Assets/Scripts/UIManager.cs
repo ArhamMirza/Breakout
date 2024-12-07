@@ -6,46 +6,55 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     // Reference to the Canvas GameObject
-    public Canvas UICanvas; // Reference to the Canvas
+    public Canvas UICanvas; 
 
-    private GameObject caughtPopup; // Reference to GameOver child
-    private Button restartButton; // Reference to Restart button
-    private Button quitButton; // Reference to Quit button
+    private GameObject caughtPopup;
+    private Button restartButton;
+    private Button quitButton;
 
     [Header("Alertness UI Settings")]
     [SerializeField] private Color lowAlertnessColor = Color.green;
     [SerializeField] private Color mediumAlertnessColor = Color.yellow;
     [SerializeField] private Color highAlertnessColor = Color.red;
-    private Slider alertnessSlider; 
-    private Image fillImage; 
-    private GameObject player; // Reference to the player object
-    private Player playerScript; // Reference to the player's script
+    private Slider alertnessSlider;
+    private Image fillImage;
+    private GameObject player;
+    private Player playerScript;
 
+    private GameObject panel; // Reference to the panel in the UI
+    private Text panelText; // Reference to the Text component inside the panel
 
     void Awake()
     {
-        // Check if an instance of UIManager already exists
         if (Instance == null)
         {
-            // Set the current instance as the singleton
             Instance = this;
-
-            // Prevent the UIManager from being destroyed when switching scenes
             DontDestroyOnLoad(gameObject);
-            
-            // Ensure the Canvas persists across scenes
             PersistCanvas();
         }
         else
         {
-            // If an instance already exists, destroy this duplicate
             Destroy(gameObject);
         }
-
-        
     }
+
     void Start()
     {
+        // Locate the panel and text child
+        panel = UICanvas.transform.Find("Panel")?.gameObject;
+        if (panel != null)
+        {
+            panelText = panel.transform.Find("Text")?.GetComponent<Text>();
+            if (panelText == null)
+            {
+                Debug.LogError("Text component not found in Panel!");
+            }
+        }
+        else
+        {
+            Debug.LogError("Panel not found in Canvas!");
+        }
+
         // Locate GameOver popup and add null check
         caughtPopup = UICanvas.transform.Find("GameOver")?.gameObject;
         if (caughtPopup == null)
@@ -86,28 +95,18 @@ public class UIManager : MonoBehaviour
             }
         }
 
-
-
+        // Initialize references to the player
         player = GameObject.FindGameObjectWithTag("Player");
-
         if (player != null)
         {
             playerScript = player.GetComponent<Player>();
-
-            if (playerScript != null)
-            {
-                Debug.Log("Player script found");
-            }
-            else
-            {
-                Debug.LogError("Player script not found on Player GameObject!");
-            }
         }
         else
         {
-            Debug.LogError("Player object not found! Make sure it is tagged as 'Player'.");
+            Debug.LogError("Player object not found!");
         }
 
+        // Initialize buttons
         restartButton = caughtPopup.transform.Find("Restart").GetComponent<Button>();
         quitButton = caughtPopup.transform.Find("Quit").GetComponent<Button>();
 
@@ -115,28 +114,34 @@ public class UIManager : MonoBehaviour
 
         restartButton.onClick.AddListener(RestartGame);
         quitButton.onClick.AddListener(QuitGame);
-
     }
 
     void Update()
     {
-        alertnessSlider.value = playerScript.GetAlertness(); 
+        alertnessSlider.value = playerScript.GetAlertness();
         UpdateSliderColor(playerScript.GetAlertness());
+
+        // Check if Enter key is pressed to resume the game
+        if (panel.activeSelf && Input.GetKeyDown(KeyCode.Return))
+        {
+            panel.SetActive(false);  // Hide the panel
+            Time.timeScale = 1;  // Resume the game
+        }
     }
 
-    // Ensure the Canvas persists
     private void PersistCanvas()
     {
         if (UICanvas != null)
         {
-            DontDestroyOnLoad(UICanvas); // Persist the Canvas and all its children across scenes
+            DontDestroyOnLoad(UICanvas);
         }
         else
         {
-            Debug.LogError("Canvas is not assigned in the UIManager!");
+            Debug.LogError("Canvas is not assigned!");
         }
     }
-     private void QuitGame()
+
+    private void QuitGame()
     {
         Time.timeScale = 1; 
         #if UNITY_EDITOR
@@ -148,8 +153,8 @@ public class UIManager : MonoBehaviour
 
     private void ShowCaughtPopup()
     {
-        caughtPopup.SetActive(true); 
-        Time.timeScale = 0; 
+        caughtPopup.SetActive(true);
+        Time.timeScale = 0;  // Freeze the game
     }
 
     private void RestartGame()
@@ -159,7 +164,7 @@ public class UIManager : MonoBehaviour
 
     public void UpdateSliderColor(float currentAlertness)
     {
-        if (currentAlertness <=100f * 0.33f)
+        if (currentAlertness <= 100f * 0.33f)
         {
             fillImage.color = lowAlertnessColor;
         }
@@ -170,6 +175,17 @@ public class UIManager : MonoBehaviour
         else
         {
             fillImage.color = highAlertnessColor;
+        }
+    }
+
+    // New function to show a message in the panel and pause the game
+    public void ShowMessageAndPause(string message)
+    {
+        if (panel != null && panelText != null)
+        {
+            panel.SetActive(true);  // Enable the panel
+            panelText.text = message;  // Set the message
+            Time.timeScale = 0;  // Freeze the game
         }
     }
 }

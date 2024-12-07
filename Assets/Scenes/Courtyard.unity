@@ -152,8 +152,29 @@ MonoBehaviour:
   spriteRenderer: {fileID: 30438352}
   movingSprite: {fileID: 0}
   backSprite: {fileID: 21300000, guid: c5e943f13c887844b979c70d68c01d33, type: 3}
-  animator: {fileID: 0}
+  animator: {fileID: 30438355}
   movementSpeed: 3
+--- !u!95 &30438355
+Animator:
+  serializedVersion: 5
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 30438345}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: a992f347b38fedd4e87f22bbfab1f0b3, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1 &68379226
 GameObject:
   m_ObjectHideFlags: 0
@@ -450,6 +471,9 @@ PrefabInstance:
     - targetCorrespondingSourceObject: {fileID: 2865572480749812001, guid: 129437af65f908f47a3b431b353c2441, type: 3}
       insertIndex: -1
       addedObject: {fileID: 30438354}
+    - targetCorrespondingSourceObject: {fileID: 2865572480749812001, guid: 129437af65f908f47a3b431b353c2441, type: 3}
+      insertIndex: -1
+      addedObject: {fileID: 30438355}
   m_SourcePrefab: {fileID: 100100000, guid: 129437af65f908f47a3b431b353c2441, type: 3}
 --- !u!1 &455456276
 GameObject:

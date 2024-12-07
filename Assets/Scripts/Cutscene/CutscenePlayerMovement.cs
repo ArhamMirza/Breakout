@@ -5,8 +5,8 @@ public class CutscenePlayerMovement : MonoBehaviour
 {
     [Header("Sprite Settings")]
     public SpriteRenderer spriteRenderer;    // Reference to the SpriteRenderer component
-    public Sprite movingSprite;  // Normal moving sprite (e.g., walking sprite)
-    public Sprite backSprite;                // Sprite to display when the player is moving
+    public Sprite movingSprite;             // Normal moving sprite (e.g., walking sprite)
+    public Sprite backSprite;               // Sprite to display when the player is moving
 
     [Header("Animator")]
     public Animator animator;               // Reference to the Animator component
@@ -18,13 +18,19 @@ public class CutscenePlayerMovement : MonoBehaviour
     private Vector3 targetPosition;         // Target position for movement
     private bool movementEnabled = false;   // Flag to allow controlled movement
 
+    private Vector2 velocity;               // Tracks the current velocity of the player
+
     private void Update()
     {
         if (movementEnabled && isMoving)
         {
-            // Move towards the target position
+            // Calculate velocity
+            Vector3 previousPosition = transform.position;
             transform.position = Vector3.MoveTowards(transform.position, targetPosition, movementSpeed * Time.deltaTime);
+            velocity = (transform.position - previousPosition) / Time.deltaTime;
 
+            SetMovementDirection(velocity);
+            // Set direction based on velocity
         }
     }
 
@@ -32,53 +38,47 @@ public class CutscenePlayerMovement : MonoBehaviour
     /// Starts moving the player to a specific target position.
     /// </summary>
     public void MoveTo(Vector3 destination)
-{
-    targetPosition = destination;
-    isMoving = true;
-    movementEnabled = true;
-
-    // Calculate movement direction
-    Vector3 direction = (destination - transform.position).normalized;
-
-    // Switch to the correct sprite based on direction
-    if (direction.y > 0)
     {
-        // Player is moving up, use the back sprite
-        if (spriteRenderer != null && backSprite != null)
+        targetPosition = destination;
+        isMoving = true;
+        movementEnabled = true;
+
+        // Update the sprite direction based on the target position
+        Vector3 direction = (destination - transform.position).normalized;
+
+        if (direction.y > 0)
         {
-            spriteRenderer.sprite = backSprite;
+            // Player is moving up, use the back sprite
+            if (spriteRenderer != null && backSprite != null)
+            {
+                spriteRenderer.sprite = backSprite;
+            }
+        }
+        else if (direction.y < 0)
+        {
+            // Player is moving down, use the normal sprite
+            if (spriteRenderer != null && movingSprite != null)
+            {
+                spriteRenderer.sprite = movingSprite;
+            }
+        }
+
+        // Switch to moving animations
+        if (animator != null)
+        {
+            animator.SetBool("isMoving", true);
         }
     }
-    else if (direction.y < 0)
-    {
-        // Player is moving down, use the normal sprite
-        if (spriteRenderer != null && movingSprite != null)
-        {
-            spriteRenderer.sprite = movingSprite;
-        }
-    }
-
-    // Switch to moving animations
-    if (animator != null)
-    {
-        animator.SetBool("isMoving", true);
-    }
-}
 
 
-    /// <summary>
-    /// Stops the player's movement and switches to the idle animation.
-    /// </summary>
-
-    /// <summary>
-    /// Enables animations based on direction (optional).
-    /// </summary>
-    public void SetMovementDirection(Vector2 direction)
+    public void SetMovementDirection(Vector2 velocity)
     {
         if (animator != null)
         {
-            animator.SetFloat("MoveX", direction.x);
-            animator.SetFloat("MoveY", direction.y);
+            animator.SetFloat("MoveX", velocity.x);
+            animator.SetFloat("MoveY", velocity.y);
+
+            Debug.Log($"SetMovementDirection called with velocity: {velocity}");
         }
     }
 }

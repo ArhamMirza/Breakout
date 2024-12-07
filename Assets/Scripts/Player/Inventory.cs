@@ -39,6 +39,24 @@ public class Inventory : MonoBehaviour
 
         UpdateInventoryUI();
     }
+    public void RemoveItem(string itemType)
+    {
+        if (items.ContainsKey(itemType))  // Use ContainsKey for checking if the item exists in the dictionary
+        {
+            items[itemType]--;  // Decrease the count of the item in the inventory
+            if (items[itemType] <= 0)
+            {
+                items.Remove(itemType);  // Remove the item completely if the count is 0 or less
+            }
+            Debug.Log(itemType + " removed from inventory.");
+        }
+        else
+        {
+            Debug.LogWarning("Item not found in inventory: " + itemType);
+        }
+    }
+
+
 
     public bool HasItem(string item)
     {

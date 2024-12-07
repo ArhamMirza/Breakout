@@ -36,31 +36,39 @@ public class GameSceneManager : MonoBehaviour
             Destroy(gameObject);  
         }
         string currentScene = SceneManager.GetActiveScene().name;
+        Debug.Log(currentScene);
+
 
     }
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
+{
+    // Find all players in the scene
+    Player[] players = FindObjectsOfType<Player>();
+
+    if (players.Length == 0)
     {
-        Player[] players = FindObjectsOfType<Player>();
-        Player player;
+        Debug.LogError("No Player objects found in the scene!");
+        return;
+    }
 
-        if (players.Length > 1)
+    foreach (Player player in players)
+    {
+        // This ensures you don't accidentally use a player that doesn't exist
+        if (player == null)
         {
-            // Retrieve the first player in the array
-             player = players[1];
+            Debug.LogError("Found null player in the scene!");
+            continue;
         }
-        else
+
+        Transform playerTransform = player.transform;
+
+        // Handle blackout if power is off
+        if (powerOff)
         {
-            player = FindObjectOfType<Player>();
-
-        }
-
-        if(powerOff)
-        {
-
             GameObject blackout = GameObject.Find("BlackOut");
-            
-            if (blackout == null) 
+
+            if (blackout == null)
             {
                 // Search all objects (including inactive ones)
                 GameObject[] allObjects = Resources.FindObjectsOfTypeAll<GameObject>();
@@ -85,23 +93,14 @@ public class GameSceneManager : MonoBehaviour
             }
         }
 
-
-        if (player == null)
-        {
-            Debug.LogError("Player object not found in the scene!");
-            return;
-        }
-
-        Transform playerTransform = player.transform; 
-
-        if(!cutsceneEnd)
+        // Handle cutscene logic if cutscene hasn't ended
+        if (!cutsceneEnd)
         {
             StartCoroutine(FadeToGroundFloor(playerTransform));  // Start fade effect
             cutsceneEnd = true;
-
         }
 
-
+        // Handle scene transitions based on previous and current scene
         if (scene.name == "Vents" && lastScene != "Vents")
         {
             spawnVent1 = GameObject.Find("Spawn_" + lastEnteredVent).transform;
@@ -113,35 +112,30 @@ public class GameSceneManager : MonoBehaviour
             Transform spawnGroundFloor = GameObject.Find("Spawn_" + lastEnteredVent).transform;
             playerTransform.position = spawnGroundFloor.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "Basement" && lastScene == "GroundFloor")
         {
             Transform spawn = GameObject.Find("Spawn_GroundToBasement").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "GroundFloor" && lastScene == "Basement")
         {
             Transform spawn = GameObject.Find("Spawn_BasementToGround").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "TopFloor" && lastScene == "GroundFloor")
         {
             Transform spawn = GameObject.Find("Spawn_GroundToTop").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "GroundFloor" && lastScene == "TopFloor")
         {
             Transform spawn = GameObject.Find("Spawn_TopToGround").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "Outside" && lastScene == "TopFloor")
         {
@@ -149,7 +143,6 @@ public class GameSceneManager : MonoBehaviour
             if (currentGateway == "Window_1")
             {
                 spawn = GameObject.Find("Spawn_WindowToOut1").transform;
-
             }
             else if (currentGateway == "Window_2")
             {
@@ -161,7 +154,6 @@ public class GameSceneManager : MonoBehaviour
             }
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "TopFloor" && lastScene == "Outside")
         {
@@ -169,7 +161,6 @@ public class GameSceneManager : MonoBehaviour
             if (currentGateway == "Window_1")
             {
                 spawn = GameObject.Find("Spawn_Window1").transform;
-
             }
             else if (currentGateway == "Window_2")
             {
@@ -181,47 +172,44 @@ public class GameSceneManager : MonoBehaviour
             }
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "Outside" && lastScene == "Vents")
         {
             Transform spawn = GameObject.Find("Spawn_VentToOut").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
         }
         else if (scene.name == "Vents" && lastScene == "Outside")
         {
             Transform spawn = GameObject.Find("Spawn_OutToVent").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
-        } 
+        }
         else if (scene.name == "GroundFloor" && lastScene == "Outside")
         {
             Transform spawn = GameObject.Find("Spawn_OutsideToGround").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
-
-        } 
+        }
         else if (scene.name == "Outside" && lastScene == "GroundFloor")
         {
-        
             Transform spawn = GameObject.Find("Spawn_GroundToOutside").transform;
             playerTransform.position = spawn.position;
             currentScene = scene.name;
+        }
 
-        } 
-
+        // Update last scene after processing
         if (lastScene != scene.name)
         {
             lastScene = scene.name;
         }
 
         storedPosition = playerTransform.position;
-        
+        RestoreDestroyedItems();
 
     }
+}
+
 
     void OnEnable()
     {
@@ -259,6 +247,32 @@ public class GameSceneManager : MonoBehaviour
     {
         return SceneManager.GetActiveScene().name;
     }
+
+    public void RestoreDestroyedItems()
+    {
+        // Get the set of destroyed items for the current scene
+        HashSet<string> destroyedItems = ItemStateManager.Instance.GetDestroyedItemsForScene(currentScene);
+
+        // Loop through each destroyed item and restore it
+        foreach (string itemId in destroyedItems)
+        {
+            // Find the item by its name (assuming itemId is the name of the item)
+            GameObject item = GameObject.Find(itemId);
+            
+            if (item != null)
+            {
+                // Restore the item (set it active)
+                item.SetActive(false);
+                Debug.Log("Item " + itemId + " is restored and enabled.");
+            }
+            else
+            {
+                Debug.LogWarning("Item with ID " + itemId + " not found in the scene.");
+            }
+        }
+    }
+
+
 
    
 

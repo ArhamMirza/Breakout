@@ -13,10 +13,15 @@ public class PlayerData
     public string lastScene;
     public string lastEnteredVent;
     public List<string> inventoryItems;
+
+    public List<string> destroyedItems; // Serialized destroyed items
+
     public string currentDirection;
 
     // Player position
     public float positionX;
     public float positionY;
     public float positionZ;
+
+
 }

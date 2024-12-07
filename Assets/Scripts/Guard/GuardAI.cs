@@ -42,15 +42,31 @@ public class GuardAI : MonoBehaviour
     public Sprite upSprite;    // Assign this in the Inspector
     public Sprite downSprite;  
     private FieldOfView.FieldOfViewDirection previousDirection;
+    private Animator animator; // Reference to Animator
+
+    private Rigidbody2D rb; // Rigidbody2D for movement, if you're using physics
+    private Vector2 previousPosition; // Track previous position to detect movement
+
+    private FieldOfView.FieldOfViewDirection currentDirection;
+
+    private bool isMoving;
+
+
+
+
 
 
 
     void Start()
     {
         player = GameObject.FindGameObjectWithTag("Player").transform;
+        isMoving = false;
+        rb = GetComponent<Rigidbody2D>(); // Assuming you're using Rigidbody2D
         playerScript = player.GetComponent<Player>();
         originalPosition = transform.position;
         spriteRenderer = GetComponent<SpriteRenderer>(); // Initialize SpriteRenderer
+        animator = GetComponent<Animator>();
+
 
         guardType = gameObject.tag;
 
@@ -75,15 +91,48 @@ public class GuardAI : MonoBehaviour
         }
 
         ManageAlertState();
-        FieldOfView.FieldOfViewDirection currentDirection = fieldOfView.getDirection();
+
+        Vector2 currentPosition = transform.position;
+        float moveX = 0f;
+        float moveY = 0f;
+
+        if (currentPosition != previousPosition)
+        {
+            // If movement has occurred, calculate direction of movement
+            Vector2 movement = currentPosition - previousPosition;
+            moveX = movement.x;
+            moveY = movement.y;
+
+            // Update the previous position
+            previousPosition = currentPosition;
+
+            // Set the movement parameters in the Animator
+            animator.SetFloat("MoveX", moveX);
+            animator.SetFloat("MoveY", moveY);
+        }
+        else
+        {
+            // No movement detected, reset movement parameters to 0 (idle)
+            animator.SetFloat("MoveX", 0f);
+            animator.SetFloat("MoveY", 0f);
+        }
+
+        currentDirection = fieldOfView.getDirection();
         if (currentDirection != previousDirection)
         {
             // Direction has changed, update the sprite
-            UpdateSpriteBasedOnDirection(currentDirection);
             previousDirection = currentDirection;  // Store the current direction as previous
         }
     }
 
+    void LateUpdate()
+    {
+        if(!isMoving)
+        {
+            UpdateSpriteBasedOnDirection(currentDirection);
+
+        }
+    }
     private void UpdateSpriteBasedOnDirection(FieldOfView.FieldOfViewDirection direction)
     {
         switch (direction)
@@ -102,6 +151,7 @@ public class GuardAI : MonoBehaviour
                 break;
         }
     }
+    
 
    private void HandlePlayerDetection()
 {
@@ -234,6 +284,8 @@ public class GuardAI : MonoBehaviour
     {
         // Reset the timer every time this coroutine starts
         timer = 0f;
+        isMoving = false;
+
 
         while (true)
         {
@@ -258,6 +310,8 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator LookAround()
     {
+        isMoving = false;
+
         if (lookAroundDirections == null || lookAroundDirections.Count == 0)
         {
             Debug.LogWarning("No directions specified for LookAround");
@@ -278,6 +332,8 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator PatrolMovement()
     {
+        isMoving = true;
+
         Vector2 patrolEnd = patrolVertical ? originalPosition + new Vector2(0f, patrolLength) : originalPosition + new Vector2(patrolLength, 0f);
 
         while (true)
@@ -334,6 +390,7 @@ public class GuardAI : MonoBehaviour
     Vector2 lastPosition = currentPosition;
     float minDistanceToCover = 1f;
     float coverBufferZone = 1f;
+    isMoving = true;
 
     // Variables to track direction changes
     Vector2 previousMoveDirection = Vector2.zero;

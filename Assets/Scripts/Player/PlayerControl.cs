@@ -25,6 +25,8 @@ public class PlayerControl : MonoBehaviour
     public LayerMask ignoreLayers; // Drag and drop the layer mask in the inspector
 
     public LayerMask cameraLayer;
+    private Animator animator; // Declare Animator
+
 
 
 
@@ -33,6 +35,8 @@ public class PlayerControl : MonoBehaviour
     {
         rb = GetComponent<Rigidbody2D>();
         player = GetComponent<Player>();
+        animator = GetComponent<Animator>(); // Get the Animator component
+
         detectionRadius = 8f;
 
         if (throwRangeIndicator != null)
@@ -125,6 +129,11 @@ public class PlayerControl : MonoBehaviour
 
     Vector2 movement = new Vector2(moveHorizontal, moveVertical);
 
+
+        // Set MoveX and MoveY parameters in Animator
+    animator.SetFloat("MoveX", movement.x); // Set horizontal movement
+    animator.SetFloat("MoveY", movement.y); // Set vertical movement
+
     // Update the player direction and sprite using the SetDirection method
     if (moveHorizontal < 0)
     {
@@ -207,11 +216,38 @@ public class PlayerControl : MonoBehaviour
 
 
     private System.Collections.IEnumerator DisableCameraForSeconds(SecurityCamera camera, float duration)
+{
+    // Play the camera disable sound at the camera's position
+    PlayCameraDisableSound(camera.transform.position);
+    
+    // Disable the camera
+    camera.Disable(); // Call the disable method on the camera
+    
+    // Wait for the specified duration
+    yield return new WaitForSeconds(duration);
+    
+    // Re-enable the camera after the duration
+    camera.Enable(); 
+}
+
+// Method to play the camera disable sound
+private void PlayCameraDisableSound(Vector3 position)
+{
+    // Load the camera disable sound clip (assign this through the inspector or load it via Resources)
+    AudioClip cameraDisableClip = Resources.Load<AudioClip>("Sounds/CameraDisable"); // Adjust path based on where your sound clip is stored
+    
+    if (cameraDisableClip != null)
     {
-        camera.Disable(); // Call the disable method on the camera
-        yield return new WaitForSeconds(duration);
-        camera.Enable();  // Re-enable the camera after the duration
+        // Play the sound at the camera's position
+        AudioSource.PlayClipAtPoint(cameraDisableClip, position);
+        Debug.Log("Camera disable sound played.");
     }
+    else
+    {
+        Debug.LogError("Camera disable sound clip not found!");
+    }
+}
+
 
     private void ToggleThrowMode()
     {
@@ -318,6 +354,7 @@ private IEnumerator MoveObjectTowardsTarget(GameObject thrownObject, Vector3 tar
 private void CreateSoundAtLocation(Vector3 position)
 {
     // Notify all guards within a specific radius about the sound
+    PlayBottleSmashSound(position);
     Debug.Log("Checking detection");
     Collider2D[] hitColliders = Physics2D.OverlapCircleAll(position, detectionRadius);
     foreach (Collider2D hit in hitColliders)
@@ -329,6 +366,26 @@ private void CreateSoundAtLocation(Vector3 position)
             Debug.Log("Guard alerted to sound");
         }
     }
+
+    // Play the bottle smash sound at the given position
 }
+
+private void PlayBottleSmashSound(Vector3 position)
+{
+    // Load your bottle smash sound clip (you can assign it via the inspector or load it by name)
+    AudioClip bottleSmashClip = Resources.Load<AudioClip>("Sounds/BottleSmash"); // Adjust the path based on where the clip is located in Resources
+
+    if (bottleSmashClip != null)
+    {
+        // Play the sound at the location of the event
+        AudioSource.PlayClipAtPoint(bottleSmashClip, position);
+        Debug.Log("Bottle Smash sound played");
+    }
+    else
+    {
+        Debug.LogError("Bottle Smash sound clip not found!");
+    }
+}
+
 
 }
