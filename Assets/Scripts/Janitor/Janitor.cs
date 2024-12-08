@@ -233,6 +233,14 @@ private IEnumerator ShowCraftDialogue()
     {
         dialogueText.text = "Great! You have the parts. Let's craft the device!";
         Debug.Log("Player has enough parts to craft the device.");
+
+        // Subtract the parts from the inventory
+        player.inventory.RemoveItem("Part");
+        player.inventory.RemoveItem("Part"); // Remove the second part
+
+        // Add the crafted device to the inventory
+        player.inventory.AddItem("Device"); // Assuming the crafted device is called "Device"
+        Debug.Log("Device crafted and added to inventory.");
     }
     else
     {
@@ -248,9 +256,8 @@ private IEnumerator ShowCraftDialogue()
     dialoguePanel.SetActive(false);
 
     ShowChoiceMenu(); // Show the choices menu for crafting
-   
-   
 }
+
 
 
 

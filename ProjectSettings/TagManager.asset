@@ -34,6 +34,7 @@ TagManager:
   - OpenDoorThisSide
   - Door_OneSide
   - Power
+  - WireFence
   layers:
   - Default
   - TransparentFX

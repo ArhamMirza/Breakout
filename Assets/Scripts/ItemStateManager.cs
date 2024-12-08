@@ -9,6 +9,7 @@ public class ItemStateManager : MonoBehaviour
 
     // Dictionary to store destroyed items by scene
     private Dictionary<string, HashSet<string>> destroyedItemsByScene;
+    private GameSceneManager gameSceneManager;
 
    private void Awake()
 {
@@ -27,6 +28,8 @@ public class ItemStateManager : MonoBehaviour
     {
         destroyedItemsByScene = new Dictionary<string, HashSet<string>>();
     }
+
+
 }
 
 
@@ -127,28 +130,58 @@ public class ItemStateManager : MonoBehaviour
         return serializedItems;
     }
     public void DeserializeDestroyedItems(List<string> serializedItems)
+{
+    destroyedItemsByScene = new Dictionary<string, HashSet<string>>();
+
+    // Deserialize the items into the dictionary
+    foreach (var entry in serializedItems)
     {
-        destroyedItemsByScene = new Dictionary<string, HashSet<string>>();
-
-        foreach (var entry in serializedItems)
+        string[] parts = entry.Split(':');
+        if (parts.Length == 2)
         {
-            string[] parts = entry.Split(':');
-            if (parts.Length == 2)
+            string sceneName = parts[0];
+            string itemId = parts[1];
+
+            // Ensure the scene exists in the dictionary
+            if (!destroyedItemsByScene.ContainsKey(sceneName))
             {
-                string sceneName = parts[0];
-                string itemId = parts[1];
+                destroyedItemsByScene[sceneName] = new HashSet<string>();
+            }
 
-                // Ensure the scene exists in the dictionary
-                if (!destroyedItemsByScene.ContainsKey(sceneName))
-                {
-                    destroyedItemsByScene[sceneName] = new HashSet<string>();
-                }
+            // Add the item to the destroyed list for the scene
+            destroyedItemsByScene[sceneName].Add(itemId);
+        }
+    }
 
-                // Add the item to the destroyed list for the scene
-                destroyedItemsByScene[sceneName].Add(itemId);
+    // Disable items for the current scene
+    string currentScene = UnityEngine.SceneManagement.SceneManager.GetActiveScene().name;
+
+    if (destroyedItemsByScene.ContainsKey(currentScene))
+    {
+        HashSet<string> destroyedItems = destroyedItemsByScene[currentScene];
+
+        foreach (string itemId in destroyedItems)
+        {
+            GameObject item = GameObject.Find(itemId);
+
+            if (item != null)
+            {
+                // Disable the item
+                item.SetActive(false);
+                Debug.Log($"Item {itemId} in scene {currentScene} has been disabled.");
+            }
+            else
+            {
+                Debug.LogWarning($"Item {itemId} not found in scene {currentScene}.");
             }
         }
     }
+    else
+    {
+        Debug.Log($"No destroyed items to disable for the current scene: {currentScene}.");
+    }
+}
+
 
 
 }

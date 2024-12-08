@@ -2712,7 +2712,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8319934960633521709, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.0009818443
+      value: 0.0005546774
       objectReference: {fileID: 0}
     - target: {fileID: 8788597417735994101, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_AnchorMax.x
@@ -3344,6 +3344,14 @@ PrefabInstance:
       propertyPath: crouchSprite
       value: 
       objectReference: {fileID: 21300000, guid: 17b29f198fd0d534082d399e7e8f4c98, type: 3}
+    - target: {fileID: 8655997410666022593, guid: 9f0c3ed89aea3b9469ae2ad833dc7001, type: 3}
+      propertyPath: disguiseSprite
+      value: 
+      objectReference: {fileID: 21300000, guid: f0524deb7241aa34e85e97ee1c072f48, type: 3}
+    - target: {fileID: 8655997410666022593, guid: 9f0c3ed89aea3b9469ae2ad833dc7001, type: 3}
+      propertyPath: itemStateManager
+      value: 
+      objectReference: {fileID: 689804363}
     - target: {fileID: 8655997410666022593, guid: 9f0c3ed89aea3b9469ae2ad833dc7001, type: 3}
       propertyPath: alertnessAudioSource
       value: 
@@ -7827,7 +7835,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 1267155543077088713, guid: 0737560e9dae09c4186e86037c946d91, type: 3}
       propertyPath: m_SortingOrder
-      value: 3
+      value: 4
       objectReference: {fileID: 0}
     - target: {fileID: 7956957913820517454, guid: 0737560e9dae09c4186e86037c946d91, type: 3}
       propertyPath: m_LocalPosition.x

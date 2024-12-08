@@ -256,6 +256,7 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator AlertedRoutine()
     {
+        isMoving = false;
         while (playerScript.GetAlertness() > 33 && !playerScript.IsCrouching)
         {
             FacePlayerDirection();
@@ -332,7 +333,6 @@ public class GuardAI : MonoBehaviour
 
     private IEnumerator PatrolMovement()
     {
-        isMoving = true;
 
         Vector2 patrolEnd = patrolVertical ? originalPosition + new Vector2(0f, patrolLength) : originalPosition + new Vector2(patrolLength, 0f);
 
@@ -352,11 +352,13 @@ public class GuardAI : MonoBehaviour
     {
         float threshold = 0.1f * 0.1f;
         StartCoroutine(PlayFootstepSounds());
+        isMoving = true;
         while ((new Vector2(transform.position.x, transform.position.y) - targetPosition).sqrMagnitude > threshold)
         {
             transform.position = Vector2.MoveTowards(transform.position, targetPosition, speed * Time.deltaTime);
             yield return null;
         }
+        isMoving = false;
         StopCoroutine(PlayFootstepSounds());
     }
 

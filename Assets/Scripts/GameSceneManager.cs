@@ -36,32 +36,29 @@ public class GameSceneManager : MonoBehaviour
             Destroy(gameObject);  
         }
         string currentScene = SceneManager.GetActiveScene().name;
+        // LoadScene(currentScene);
         Debug.Log(currentScene);
 
 
     }
+    private void Start()
+    {
+        StartCoroutine(WaitForPlayerAndRestore());
+    }
+
+    private IEnumerator WaitForPlayerAndRestore()
+    {
+        yield return new WaitUntil(() => Player.Instance != null && Player.Instance.isLoaded); // Add a flag in Player to indicate loading completion
+        RestoreDestroyedItems();
+    }
+
 
     private void OnSceneLoaded(Scene scene, LoadSceneMode mode)
 {
-    // Find all players in the scene
-    Player[] players = FindObjectsOfType<Player>();
+    // Find all players in the scen
+        
 
-    if (players.Length == 0)
-    {
-        Debug.LogError("No Player objects found in the scene!");
-        return;
-    }
-
-    foreach (Player player in players)
-    {
-        // This ensures you don't accidentally use a player that doesn't exist
-        if (player == null)
-        {
-            Debug.LogError("Found null player in the scene!");
-            continue;
-        }
-
-        Transform playerTransform = player.transform;
+        Transform playerTransform = Player.Instance.transform;
 
         // Handle blackout if power is off
         if (powerOff)
@@ -197,6 +194,7 @@ public class GameSceneManager : MonoBehaviour
             playerTransform.position = spawn.position;
             currentScene = scene.name;
         }
+       
 
         // Update last scene after processing
         if (lastScene != scene.name)
@@ -207,7 +205,7 @@ public class GameSceneManager : MonoBehaviour
         storedPosition = playerTransform.position;
         RestoreDestroyedItems();
 
-    }
+    
 }
 
 

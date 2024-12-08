@@ -4,6 +4,8 @@ using UnityEngine.SceneManagement;
 using System.Collections.Generic;
 using System.IO; 
 using System; 
+using System.Collections;
+
 
 
 public class Player : MonoBehaviour
@@ -58,6 +60,8 @@ public class Player : MonoBehaviour
     private GameObject stairsOutsideToGround;
     private GameObject stairsGroundToOutside;
 
+    private GameObject exit;
+
 
     private GameSceneManager gameSceneManager;
 
@@ -76,9 +80,16 @@ public class Player : MonoBehaviour
 
     [SerializeField] private Sprite crouchSprite;
 
-    private ItemStateManager itemStateManager;
+    public ItemStateManager itemStateManager;
 
     private Animator animator;
+
+    public bool isLoaded;
+
+    private bool power;
+
+    public GameObject exitFade;               
+
 
 
 
@@ -98,16 +109,17 @@ public class Player : MonoBehaviour
 {
     gameSceneManager = FindObjectOfType<GameSceneManager>();
     uiManager = FindObjectOfType<UIManager>();
-    GameObject itemManagerObject = GameObject.Find("ItemStateManager");
+    exitFade = null;
+    // GameObject itemManagerObject = GameObject.Find("ItemStateManager");
 
-    if (itemManagerObject != null)
-    {
-        itemStateManager = itemManagerObject.GetComponent<ItemStateManager>();
-    }
-    else
-    {
-        Debug.LogError("ItemManager GameObject not found!");
-    }
+    // if (itemManagerObject != null)
+    // {
+    //     itemStateManager = itemManagerObject.GetComponent<ItemStateManager>();
+    // }
+    // else
+    // {
+    //     Debug.LogError("ItemManager GameObject not found!");
+    // }
     
     spriteRenderer = GetComponent<SpriteRenderer>();
     originalSprite = spriteRenderer.sprite;
@@ -147,6 +159,7 @@ public class Player : MonoBehaviour
     stairsBasementToGround = null;
     stairsTopToGround = null;
     stairsOutsideToGround = null;
+    exit = null;
 
     // Singleton logic
     if (Instance == null)
@@ -165,7 +178,9 @@ public class Player : MonoBehaviour
             if (stairsOutsideToGround != null) DontDestroyOnLoad(stairsOutsideToGround);
             if (stairsTopToGround != null) DontDestroyOnLoad(stairsTopToGround);
             if (inventory != null && inventory.gameObject != null) DontDestroyOnLoad(inventory.gameObject);
+            if (itemStateManager != null && itemStateManager.gameObject != null) DontDestroyOnLoad(itemStateManager.gameObject);
             if (alertnessAudioSource != null) DontDestroyOnLoad(alertnessAudioSource);
+            if (spriteRenderer !=null) DontDestroyOnLoad(spriteRenderer);
 
             Debug.Log("Dont Destroy Player");
         }
@@ -181,24 +196,10 @@ public class Player : MonoBehaviour
 
     // Load disguise state from JSON and set the sprite accordingly
     LoadPlayer();
-    SetInitialSprite();
+    isLoaded = true;
+    // SetInitialSprite();
 }
 
-
-private void SetInitialSprite()
-{
-    if (disguiseOn)
-    {
-        spriteRenderer.sprite = disguiseSprite; // Set disguise sprite
-    }
-    else
-    {
-        spriteRenderer.sprite = originalSprite; // Set original sprite
-    }
-
-    // Optionally set initial direction
-    SetDirection(Direction.Right); // or any default direction you prefer
-}
 
 
 
@@ -208,6 +209,11 @@ private void SetInitialSprite()
         defaultMoveSpeed = moveSpeed; 
         Time.timeScale = 1; 
         animator = GetComponent<Animator>();
+        power = true;
+        if(disguiseOn)
+        {
+            animator.SetBool("Disguise",disguiseOn);
+        }
 
 
         if (inventory == null)
@@ -226,7 +232,10 @@ private void SetInitialSprite()
             { "Vent1", target => HandleVentInteraction("Vent1", target) }, 
             { "Vent2", target => HandleVentInteraction("Vent2", target) } ,
             { "Vent3", target => HandleVentInteraction("Vent3", target) },  
-            { "Vent4", target => HandleVentInteraction("Vent4", target) }  
+            { "Vent4", target => HandleVentInteraction("Vent4", target) },
+            { "WireFence", HandleWireFenceInteraction },
+
+
 
         };
         // fillImage = alertnessSlider.fillRect.GetComponent<Image>();
@@ -302,7 +311,60 @@ private void SetInitialSprite()
             }
 
             gameSceneManager.RoomTransition(transform, stairsOutsideToGround, "GroundFloor");
+           
+           if ((transform.position - new Vector3(19.46f, 1.47f,0f)).sqrMagnitude <= 1f)
+            {
+                StartCoroutine(FadeAndLoadScene());
+            }
 
+
+
+        }
+    }
+    IEnumerator FadeAndLoadScene()
+    {
+        GameObject exitFade = GameObject.Find("ExitFade");
+        
+        if (exitFade != null)
+        {
+            SpriteRenderer exitFadeRenderer = exitFade.GetComponent<SpriteRenderer>();
+            Color startColor = exitFadeRenderer.color;
+
+            float elapsedTime = 0f;
+
+            // Gradually increase opacity to full (starting from the current alpha)
+            while (elapsedTime < 3f)
+            {
+                // Lerp the alpha value from its current alpha to 1
+                float alpha = Mathf.Lerp(startColor.a, 1f, elapsedTime / 3f);
+                exitFadeRenderer.color = new Color(startColor.r, startColor.g, startColor.b, alpha);
+                elapsedTime += Time.deltaTime;
+                yield return null;
+            }
+
+            // Ensure the alpha is set to 1 (fully visible)
+            exitFadeRenderer.color = new Color(startColor.r, startColor.g, startColor.b, 1f);
+
+            GameObject[] allObjects = GameObject.FindObjectsOfType<GameObject>();
+
+            foreach (GameObject obj in allObjects)
+            {
+                // Skip the main camera
+                if (obj == Camera.main.gameObject)
+                {
+                    continue; // Skip this iteration and don't destroy the camera
+                }
+
+                // Destroy the object
+                Destroy(obj);
+            }
+
+            // Load the End scene
+            gameSceneManager.LoadScene("End");
+        }
+        else
+        {
+            Debug.LogError("ExitFade GameObject not found!");
         }
     }
 
@@ -342,6 +404,7 @@ private void SetInitialSprite()
     }
 
 }
+   
 
 
     public float MoveSpeed
@@ -425,6 +488,7 @@ private void SetInitialSprite()
     private void HandlePowerInteraction(GameObject target)
     {
         uiManager.ShowMessageAndPause("Power Shut down!");
+        power = false;
         GameObject blackout = GameObject.Find("BlackOut");
         
         if (blackout == null) 
@@ -481,36 +545,69 @@ private void SetInitialSprite()
 
     // Handle item interaction
     private void HandleItemInteraction(GameObject target)
+{
+    string itemType = target.tag.Substring(5);
+
+    if (itemType == "Disguise")
     {
-        string itemType = target.tag.Substring(5);
+        PutOnDisguise();
+        Destroy(target);
+        itemStateManager.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
 
-        if (itemType == "Disguise")
+        // Send message to UIManager
+        uiManager.ShowMessageAndPause("Disguise acquired!");
+
+        return;
+    }
+
+    if (itemType == "Bottle")
+{
+    // Check current bottle count in inventory
+    int currentBottles = inventory.items.ContainsKey("Bottle") ? inventory.items["Bottle"] : 0;
+
+    // If the player has less than 5 bottles, refill up to 5
+    if (currentBottles < 5)
+    {
+        int bottlesToAdd = 5 - currentBottles;
+
+        // Loop to add up to 5 bottles
+        for (int i = 0; i < bottlesToAdd; i++)
         {
-            PutOnDisguise();
-            Destroy(target);
-            ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
-
-            // Send message to UIManager
-            uiManager.ShowMessageAndPause("Disguise acquired!");
-
-            return;
+            inventory.AddItem("Bottle");
         }
 
-        // For other items
-        inventory.AddItem(itemType);
-        Debug.Log("Picked up item: " + itemType);
+        uiManager.ShowMessageAndPause("Picked up bottle. Refilled " + bottlesToAdd + " bottles.");
 
         if (itemPickupAudioClip != null)
         {
             alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
         }
-
-        Destroy(target);
-        ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
-
-        // Send message to UIManager
-        uiManager.ShowMessageAndPause("Picked up item: " + itemType);
     }
+    else
+    {
+        uiManager.ShowMessageAndPause("Max bottles reached. Can't carry more.");
+    }
+
+    // Do not destroy the bottle object or mark as destroyed
+    return;
+}
+
+
+    // For other items
+    inventory.AddItem(itemType);
+    Debug.Log("Picked up item: " + itemType);
+
+    if (itemPickupAudioClip != null)
+    {
+        alertnessAudioSource.PlayOneShot(itemPickupAudioClip);
+    }
+
+    Destroy(target);
+    itemStateManager.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+
+    // Send message to UIManager
+    uiManager.ShowMessageAndPause("Picked up item: " + itemType);
+}
 
 
     private void PutOnDisguise()
@@ -520,6 +617,7 @@ private void SetInitialSprite()
             spriteRenderer.sprite = disguiseSprite; 
             Debug.Log("Disguise applied!");
             disguiseOn = true;
+            animator.SetBool("Disguise", disguiseOn);
             baseAlertnessIncrease /=3;
             alertnessMultiplier/=3;
         }
@@ -544,7 +642,7 @@ private void SetInitialSprite()
                 Debug.Log("Opened door!");
                 uiManager.ShowMessageAndPause("Door Opened!");
                 Destroy(target);
-                ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+                itemStateManager.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
             }
             else
             {
@@ -565,7 +663,8 @@ private void SetInitialSprite()
             }
 
             Destroy(target);
-            ItemStateManager.Instance.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+            itemStateManager.MarkItemAsDestroyed(target.name); // Mark the item as destroyed
+
         }
         else
         {
@@ -608,6 +707,19 @@ private void SetInitialSprite()
         {
             // uiManager.ShowMessageAndPause($"Cannot open {ventId} without a screwdriver.");
         }
+    }
+
+    private void HandleWireFenceInteraction(GameObject target)
+    {
+        if(inventory.HasItem("Pliers") && !power)
+        {
+            Destroy(target);
+        }
+        else
+        {
+            uiManager.ShowMessageAndPause($"Need to shut off power and get pliers");
+        }
+
     }
 
     public void SetAlertness(float value)
@@ -684,7 +796,7 @@ private void SetInitialSprite()
             lastScene = lastScene,
             lastEnteredVent = lastEnteredVent,
             inventoryItems = inventory.SerializeInventory(),
-            destroyedItems = ItemStateManager.Instance.SerializeDestroyedItems(),
+            destroyedItems = itemStateManager.SerializeDestroyedItems(),
             currentDirection = currentDirection.ToString(),
             positionX = transform.position.x,
             positionY = transform.position.y,
@@ -713,10 +825,11 @@ private void SetInitialSprite()
 
         // Restore inventory
         inventory.DeserializeInventory(data.inventoryItems);
-
-        // Restore destroyed items
         transform.position = new Vector3(data.positionX, data.positionY, data.positionZ);
-        itemStateManager.DeserializeDestroyedItems(data.destroyedItems); 
+        itemStateManager.DeserializeDestroyedItems(data.destroyedItems);
+
+
+
 
         Debug.Log("Game Loaded");
     }
@@ -725,6 +838,8 @@ private void SetInitialSprite()
         Debug.LogWarning("Save file not found");
     }
 }
+
+
 
 
 } 

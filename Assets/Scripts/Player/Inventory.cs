@@ -54,6 +54,7 @@ public class Inventory : MonoBehaviour
         {
             Debug.LogWarning("Item not found in inventory: " + itemType);
         }
+        UpdateInventoryUI();
     }
 
 

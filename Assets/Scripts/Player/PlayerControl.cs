@@ -27,6 +27,8 @@ public class PlayerControl : MonoBehaviour
     public LayerMask cameraLayer;
     private Animator animator; // Declare Animator
 
+    private Inventory inventory;
+
 
 
 
@@ -36,6 +38,7 @@ public class PlayerControl : MonoBehaviour
         rb = GetComponent<Rigidbody2D>();
         player = GetComponent<Player>();
         animator = GetComponent<Animator>(); // Get the Animator component
+        inventory = GetComponent<Inventory>();
 
         detectionRadius = 8f;
 
@@ -62,20 +65,32 @@ public class PlayerControl : MonoBehaviour
         // Interaction
         if (Input.GetKeyDown(KeyCode.E))
         {
-            Debug.Log("Interacting");
             InteractWithEnvironment();
         }
         if (Input.GetKeyDown(KeyCode.R))
         {
-            Debug.Log("Enabling Device");
-            DisableDevice(player.transform.position);
+            if (inventory.HasItem("Device")) // Replace "Device" with the actual item name in your inventory
+            {
+                DisableDevice(player.transform.position);  // Call the method to disable the device
+            }
+            else
+            {
+                UIManager.Instance.ShowMessageAndPause("Device not found in inventory.");
+            }
         }
 
         // Throwing
         if (Input.GetKeyDown(KeyCode.T))
         {
-            Debug.Log("Toggling Throw Mode");
-            ToggleThrowMode();
+            if (!inventory.HasItem("Bottle")) // Replace "Bottle" with the exact item name in your inventory
+            {
+                UIManager.Instance.ShowMessageAndPause("No bottles in inventory to throw.");
+            }
+            else
+            {
+                ToggleThrowMode();
+
+            }
         }
 
         if (isThrowMode && Input.GetMouseButtonDown(0))
@@ -86,7 +101,6 @@ public class PlayerControl : MonoBehaviour
             if ((clickPosition - (Vector2)transform.position).sqrMagnitude <= throwRange * throwRange)
             {
                 // ThrowObject(clickPosition);
-                Debug.Log("Throwing Object");
                 ThrowObject(clickPosition);
                 ToggleThrowMode();
             }
@@ -267,26 +281,27 @@ private void PlayCameraDisableSound(Vector3 position)
 
    private void ThrowObject(Vector3 target)
 {
+    
+
     // Calculate the direction and distance between the player and the target
     Vector2 direction = (target - transform.position).normalized;
     float distanceSquared = (target - transform.position).sqrMagnitude;
-    float distance = Mathf.Sqrt(distanceSquared)*0.8f; 
+    float distance = Mathf.Sqrt(distanceSquared) * 0.8f;
 
     // Cast a ray to check for walls or obstacles in the path
     RaycastHit2D hit = Physics2D.Raycast(transform.position, direction, distance, ~ignoreLayers); // ~ operator inverts the mask to ignore the player
 
     // Store ray start and end positions for Gizmo drawing
     rayStartPosition = transform.position;
-    
+
     if (hit.collider != null)
     {
         // Ray hit something, check if it's an obstacle
         if (hit.collider.CompareTag("Wall"))
         {
-            Debug.Log("Throw path is blocked by a wall or obstacle.");
+            UIManager.Instance.ShowMessageAndPause("Throw path is blocked by a wall or obstacle.");
             return; // If there's an obstacle, don't throw the object
         }
-
     }
     else
     {
@@ -311,7 +326,10 @@ private void PlayCameraDisableSound(Vector3 position)
         StartCoroutine(MoveObjectTowardsTarget(thrownObject, target));
     }
 
+    // After throwing, subtract one bottle from the inventory
+    inventory.RemoveItem("Bottle"); // This assumes "Bottle" is the exact key in your inventory
 }
+
 
 
 // Coroutine to move the object towards the target and destroy it at the destination

@@ -19,18 +19,28 @@ public class CutscenePlayerMovement : MonoBehaviour
     private bool movementEnabled = false;   // Flag to allow controlled movement
 
     private Vector2 velocity;               // Tracks the current velocity of the player
+    private const float stopDistance = 0.1f; // Threshold distance to stop (use squared value)
 
     private void Update()
     {
         if (movementEnabled && isMoving)
         {
-            // Calculate velocity
-            Vector3 previousPosition = transform.position;
-            transform.position = Vector3.MoveTowards(transform.position, targetPosition, movementSpeed * Time.deltaTime);
-            velocity = (transform.position - previousPosition) / Time.deltaTime;
+            // Calculate squared distance to avoid using Vector3.Distance
+            float sqrDistanceToTarget = (targetPosition - transform.position).sqrMagnitude;
 
-            SetMovementDirection(velocity);
-            // Set direction based on velocity
+            if (sqrDistanceToTarget <= stopDistance * stopDistance)
+            {
+                StopMoving();
+            }
+            else
+            {
+                // Move towards the target
+                Vector3 previousPosition = transform.position;
+                transform.position = Vector3.MoveTowards(transform.position, targetPosition, movementSpeed * Time.deltaTime);
+                velocity = (transform.position - previousPosition) / Time.deltaTime;
+
+                SetMovementDirection(velocity);
+            }
         }
     }
 
@@ -70,15 +80,33 @@ public class CutscenePlayerMovement : MonoBehaviour
         }
     }
 
-
+    /// <summary>
+    /// Sets the movement direction for animations.
+    /// </summary>
     public void SetMovementDirection(Vector2 velocity)
     {
         if (animator != null)
         {
             animator.SetFloat("MoveX", velocity.x);
             animator.SetFloat("MoveY", velocity.y);
-
             Debug.Log($"SetMovementDirection called with velocity: {velocity}");
+        }
+    }
+
+    /// <summary>
+    /// Stops the movement and resets states.
+    /// </summary>
+    private void StopMoving()
+    {
+        isMoving = false;
+        movementEnabled = false;
+
+        // Reset velocity and animator state
+        velocity = Vector2.zero;
+
+        if (animator != null)
+        {
+            animator.SetBool("isMoving", false);
         }
     }
 }
