@@ -254,7 +254,6 @@ MonoBehaviour:
   m_EditorClassIdentifier: 
   groundFloorSceneName: GroundFloor
   courtyardSceneName: Courtyard
-  saveFilePath: C:\Users\Arham Mirza\AppData\LocalLow\DefaultCompany\Breakout\playerSave.json
   controlsPanel: {fileID: 1090176511}
   newGameButton: {fileID: 1737028033}
   continueButton: {fileID: 803631601}

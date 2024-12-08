@@ -2712,7 +2712,7 @@ PrefabInstance:
       objectReference: {fileID: 0}
     - target: {fileID: 8319934960633521709, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_AnchoredPosition.y
-      value: 0.0005546774
+      value: 0.000002718535
       objectReference: {fileID: 0}
     - target: {fileID: 8788597417735994101, guid: 7a972a36f26b1d0468b5652183ba24af, type: 3}
       propertyPath: m_AnchorMax.x
@@ -5348,7 +5348,7 @@ PrefabInstance:
     m_Modifications:
     - target: {fileID: 824606085588065168, guid: c3d2c7ed7ff9a73469359bacd5d8f165, type: 3}
       propertyPath: alertnessIncreaseRate
-      value: 200
+      value: 300
       objectReference: {fileID: 0}
     - target: {fileID: 2925754012500838961, guid: c3d2c7ed7ff9a73469359bacd5d8f165, type: 3}
       propertyPath: m_FlipX

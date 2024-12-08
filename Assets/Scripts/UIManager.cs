@@ -1,5 +1,6 @@
 using UnityEngine;
 using UnityEngine.UI;
+using UnityEngine.SceneManagement; // Import SceneManagement for restart functionality
 
 public class UIManager : MonoBehaviour
 {
@@ -23,6 +24,10 @@ public class UIManager : MonoBehaviour
 
     private GameObject panel; // Reference to the panel in the UI
     private Text panelText; // Reference to the Text component inside the panel
+
+    private Button selectedButton;
+    private Color defaultButtonColor;
+    private Color selectedButtonColor = Color.cyan; // Color when the button is selected
 
     void Awake()
     {
@@ -110,10 +115,17 @@ public class UIManager : MonoBehaviour
         restartButton = caughtPopup.transform.Find("Restart").GetComponent<Button>();
         quitButton = caughtPopup.transform.Find("Quit").GetComponent<Button>();
 
+        // Set default color for buttons
+        defaultButtonColor = restartButton.colors.normalColor;
+
         caughtPopup.SetActive(false);
 
         restartButton.onClick.AddListener(RestartGame);
         quitButton.onClick.AddListener(QuitGame);
+
+        // Set the default selected button
+        selectedButton = restartButton;
+        UpdateButtonColor();
     }
 
     void Update()
@@ -121,11 +133,32 @@ public class UIManager : MonoBehaviour
         alertnessSlider.value = playerScript.GetAlertness();
         UpdateSliderColor(playerScript.GetAlertness());
 
-        // Check if Enter key is pressed to resume the game
+        // Check if Enter key is pressed to trigger the selected button's click
         if (panel.activeSelf && Input.GetKeyDown(KeyCode.Return))
         {
             panel.SetActive(false);  // Hide the panel
             Time.timeScale = 1;  // Resume the game
+        }
+
+        // Use arrow keys to navigate between buttons
+        if (caughtPopup.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.LeftArrow))
+            {
+                // Cycle to the left button (Restart)
+                SelectButton(restartButton);
+            }
+            else if (Input.GetKeyDown(KeyCode.RightArrow))
+            {
+                // Cycle to the right button (Quit)
+                SelectButton(quitButton);
+            }
+
+            // Press Enter to activate the selected button
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                selectedButton.onClick.Invoke();
+            }
         }
     }
 
@@ -151,7 +184,7 @@ public class UIManager : MonoBehaviour
         #endif
     }
 
-    private void ShowCaughtPopup()
+    public void ShowCaughtPopup()
     {
         caughtPopup.SetActive(true);
         Time.timeScale = 0;  // Freeze the game
@@ -159,7 +192,21 @@ public class UIManager : MonoBehaviour
 
     private void RestartGame()
     {
-        Debug.Log("Restarting");
+        // Ensure time scale is reset
+        Time.timeScale = 1; 
+
+        // Destroy all objects except the main camera
+        foreach (GameObject obj in FindObjectsOfType<GameObject>())
+        {
+            // Check if the object is not the main camera
+            if (obj != Camera.main.gameObject)
+            {
+                Destroy(obj);
+            }
+        }
+
+        // Reload the current scene
+        SceneManager.LoadScene("GroundFloor");
     }
 
     public void UpdateSliderColor(float currentAlertness)
@@ -187,5 +234,34 @@ public class UIManager : MonoBehaviour
             panelText.text = message;  // Set the message
             Time.timeScale = 0;  // Freeze the game
         }
+    }
+
+    // Function to change the selected button and update its color
+    private void SelectButton(Button newButton)
+    {
+        // Deselect the previous button
+        DeselectButton(selectedButton);
+
+        // Select the new button
+        selectedButton = newButton;
+
+        // Update the button colors
+        UpdateButtonColor();
+    }
+
+    // Function to deselect a button and restore its default color
+    private void DeselectButton(Button button)
+    {
+        ColorBlock colors = button.colors;
+        colors.normalColor = defaultButtonColor;
+        button.colors = colors;
+    }
+
+    // Function to update the selected button's color
+    private void UpdateButtonColor()
+    {
+        ColorBlock colors = selectedButton.colors;
+        colors.normalColor = selectedButtonColor;
+        selectedButton.colors = colors;
     }
 }

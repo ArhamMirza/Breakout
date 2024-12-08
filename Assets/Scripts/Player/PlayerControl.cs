@@ -369,24 +369,45 @@ private IEnumerator MoveObjectTowardsTarget(GameObject thrownObject, Vector3 tar
 //     }
 // }
 
-private void CreateSoundAtLocation(Vector3 position)
-{
-    // Notify all guards within a specific radius about the sound
-    PlayBottleSmashSound(position);
-    Debug.Log("Checking detection");
-    Collider2D[] hitColliders = Physics2D.OverlapCircleAll(position, detectionRadius);
-    foreach (Collider2D hit in hitColliders)
+    private void CreateSoundAtLocation(Vector3 position)
     {
-        GuardAI guard = hit.GetComponent<GuardAI>();
-        if (guard != null)
+        // Play the bottle smash sound effect at the location
+        PlayBottleSmashSound(position);
+
+        Debug.Log("Checking detection");
+
+        // Find all guards within the detection radius
+        Collider2D[] hitColliders = Physics2D.OverlapCircleAll(position, detectionRadius);
+
+        GuardAI closestGuard = null;
+        float closestSqrDistance = Mathf.Infinity; // Use squared distance
+
+        // Iterate through the detected colliders
+        foreach (Collider2D hit in hitColliders)
         {
-            guard.OnSoundHeard(position);
-            Debug.Log("Guard alerted to sound");
+            GuardAI guard = hit.GetComponent<GuardAI>();
+            if (guard != null)
+            {
+                // Calculate the squared distance to the guard
+                float sqrDistanceToGuard = (position - hit.transform.position).sqrMagnitude;
+
+                // Update the closest guard if this one is closer
+                if (sqrDistanceToGuard < closestSqrDistance)
+                {
+                    closestSqrDistance = sqrDistanceToGuard;
+                    closestGuard = guard;
+                }
+            }
+        }
+
+        // Alert the closest guard if one is found
+        if (closestGuard != null)
+        {
+            closestGuard.OnSoundHeard(position);
+            Debug.Log($"Closest guard alerted to sound at {position}");
         }
     }
 
-    // Play the bottle smash sound at the given position
-}
 
 private void PlayBottleSmashSound(Vector3 position)
 {

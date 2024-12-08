@@ -213,6 +213,8 @@ public class Player : MonoBehaviour
         if(disguiseOn)
         {
             animator.SetBool("Disguise",disguiseOn);
+            baseAlertnessIncrease /=2;
+            alertnessMultiplier/=2;
         }
 
 
@@ -263,7 +265,7 @@ public class Player : MonoBehaviour
 
         if (alertness == 100)
         {
-            // ShowCaughtPopup(); 
+            uiManager.ShowCaughtPopup(); 
         }
 
         uiManager.UpdateSliderColor(alertness);
@@ -368,15 +370,6 @@ public class Player : MonoBehaviour
         }
     }
 
-    // void LateUpdate()
-    // {
-    //     if(isCrouching)
-    //     {
-    //         spriteRenderer.sprite = crouchSprite;
-    //         originalSprite = crouchSprite;
-    //     }
-        
-    // }
 
     // Toggle crouch
     public void ToggleCrouch()
@@ -512,7 +505,7 @@ public class Player : MonoBehaviour
         }
         else
         {
-            Debug.LogError("BlackOut GameObject not found!");
+            // Debug.LogError("BlackOut GameObject not found!");
         }
         gameSceneManager.TurnOffPower();
     
@@ -618,8 +611,8 @@ public class Player : MonoBehaviour
             Debug.Log("Disguise applied!");
             disguiseOn = true;
             animator.SetBool("Disguise", disguiseOn);
-            baseAlertnessIncrease /=3;
-            alertnessMultiplier/=3;
+            baseAlertnessIncrease /=2;
+            alertnessMultiplier/=2;
         }
         else
         {

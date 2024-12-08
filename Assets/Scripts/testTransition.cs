@@ -9,7 +9,7 @@ public class TestTransition : MonoBehaviour
 {
     public string groundFloorSceneName = "GroundFloor"; // Ground floor scene name
     public string courtyardSceneName = "Courtyard"; // Courtyard scene name
-    public string saveFilePath = "saveData.dat"; // Path to the save file
+    private string saveFilePath; // Dynamic save file path
 
     // Panel and Buttons
     public GameObject controlsPanel; // Reference to controls panel
@@ -27,6 +27,9 @@ public class TestTransition : MonoBehaviour
     // Start is called before the first frame update
     void Start()
     {
+        // Generate save file path dynamically
+        saveFilePath = Path.Combine(Application.persistentDataPath, "playerSave.json");
+
         // Initialize buttons and subscribe to onClick events
         buttons = new List<Button> { newGameButton, continueButton, controlsButton };
 
@@ -110,6 +113,11 @@ public class TestTransition : MonoBehaviour
         {
             // Load GroundFloor scene
             SceneManager.LoadScene(groundFloorSceneName);
+        }
+        else
+        {
+            // Show popup message if save file doesn't exist
+            Debug.Log("No save file found! Please start a new game.");
         }
     }
 

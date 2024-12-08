@@ -91,6 +91,7 @@ public class GuardAI : MonoBehaviour
         }
 
         ManageAlertState();
+        
 
         Vector2 currentPosition = transform.position;
         float moveX = 0f;
@@ -105,6 +106,7 @@ public class GuardAI : MonoBehaviour
 
             // Update the previous position
             previousPosition = currentPosition;
+            animator.enabled = true;
 
             // Set the movement parameters in the Animator
             animator.SetFloat("MoveX", moveX);
@@ -113,9 +115,12 @@ public class GuardAI : MonoBehaviour
         else
         {
             // No movement detected, reset movement parameters to 0 (idle)
-            animator.SetFloat("MoveX", 0f);
-            animator.SetFloat("MoveY", 0f);
+            // animator.SetFloat("MoveX", 0f);
+            // animator.SetFloat("MoveY", 0f);
+            animator.enabled = false;
         }
+        UpdateSpriteBasedOnDirection(currentDirection);
+
 
         currentDirection = fieldOfView.getDirection();
         if (currentDirection != previousDirection)
@@ -397,22 +402,25 @@ public class GuardAI : MonoBehaviour
     // Variables to track direction changes
     Vector2 previousMoveDirection = Vector2.zero;
     int directionChangeCount = 0;
-    float directionChangeResetTime = 1f; // Time window to reset the counter
+    float directionChangeResetTime = 1f; 
     float directionChangeTimer = 0f;
 
     // Check if within close range to just look at the sound
     float squaredDistanceToSound = (currentPosition - (Vector2)soundPosition).sqrMagnitude;
     if (squaredDistanceToSound <= 16f)
     {
+        // Guard is close enough to just look at the sound
         Vector2 directionToSound = ((Vector2)soundPosition - currentPosition).normalized;
         Vector2 moveDirection = GetCardinalDirection(directionToSound);
         UpdateFieldOfViewDirection(moveDirection);
-        StartRoutineBasedOnGuardType();
+        UpdateSpriteBasedOnDirection(currentDirection);
+
         yield break;
     }
-
+    // Guard starts moving toward the sound
     while ((currentPosition - (Vector2)soundPosition).sqrMagnitude > 2f)
     {
+        
         Vector2 directionToSound = ((Vector2)soundPosition - currentPosition).normalized;
         Vector2 moveDirection = GetCardinalDirection(directionToSound);
 
@@ -435,7 +443,6 @@ public class GuardAI : MonoBehaviour
             previousMoveDirection = moveDirection;
         }
 
-        // Handle excessive direction changes
         directionChangeTimer += Time.deltaTime;
         if (directionChangeTimer >= directionChangeResetTime)
         {
@@ -449,26 +456,30 @@ public class GuardAI : MonoBehaviour
         }
 
         UpdateFieldOfViewDirection(moveDirection);
+        UpdateSpriteBasedOnDirection(currentDirection);
+
         currentPosition = Vector2.MoveTowards(currentPosition, currentPosition + moveDirection, speed * Time.deltaTime);
         transform.position = new Vector3(currentPosition.x, currentPosition.y, transform.position.z);
 
         if (currentPosition == lastPosition)
         {
-            Debug.Log("Guard is stuck, breaking loop.");
             UpdateFieldOfViewDirection(moveDirection);
-            currentRoutine = StartCoroutine(Stationary());
+            UpdateSpriteBasedOnDirection(currentDirection);
 
+            currentRoutine = StartCoroutine(Stationary());
             break;
         }
 
         lastPosition = currentPosition;
         yield return null;
     }
+    UpdateSpriteBasedOnDirection(currentDirection);
 
-    // StartRoutineBasedOnGuardType();
+
     currentRoutine = StartCoroutine(Stationary());
 
 }
+
 
 // Helper to determine cardinal and diagonal directions
 private Vector2 GetCardinalDirection(Vector2 direction)
