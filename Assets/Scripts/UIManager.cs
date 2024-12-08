@@ -7,7 +7,7 @@ public class UIManager : MonoBehaviour
     public static UIManager Instance { get; private set; }
 
     // Reference to the Canvas GameObject
-    public Canvas UICanvas; 
+    public Canvas UICanvas;
 
     private GameObject caughtPopup;
     private Button restartButton;
@@ -28,6 +28,12 @@ public class UIManager : MonoBehaviour
     private Button selectedButton;
     private Color defaultButtonColor;
     private Color selectedButtonColor = Color.cyan; // Color when the button is selected
+
+    // New variables for PausePanel
+    private GameObject pausePanel;
+    private Button resumeButton;
+    private Button quitFromPauseButton;
+    private Button selectedPauseButton;
 
     void Awake()
     {
@@ -126,21 +132,30 @@ public class UIManager : MonoBehaviour
         // Set the default selected button
         selectedButton = restartButton;
         UpdateButtonColor();
+
+        // Locate PausePanel and buttons
+        pausePanel = UICanvas.transform.Find("PausePanel")?.gameObject;
+        if (pausePanel != null)
+        {
+            resumeButton = pausePanel.transform.Find("Resume").GetComponent<Button>();
+            quitFromPauseButton = pausePanel.transform.Find("Quit").GetComponent<Button>();
+
+            resumeButton.onClick.AddListener(ResumeGame);
+            quitFromPauseButton.onClick.AddListener(QuitGame);
+
+            selectedPauseButton = resumeButton; // Default to Resume button
+            UpdatePauseButtonColor();
+        }
+        else
+        {
+            Debug.LogError("PausePanel not found in Canvas!");
+        }
     }
 
     void Update()
     {
         alertnessSlider.value = playerScript.GetAlertness();
         UpdateSliderColor(playerScript.GetAlertness());
-
-        // Check if Enter key is pressed to trigger the selected button's click
-        if (panel.activeSelf && Input.GetKeyDown(KeyCode.Return))
-        {
-            panel.SetActive(false);  // Hide the panel
-            Time.timeScale = 1;  // Resume the game
-        }
-
-        // Use arrow keys to navigate between buttons
         if (caughtPopup.activeSelf)
         {
             if (Input.GetKeyDown(KeyCode.LeftArrow))
@@ -160,6 +175,41 @@ public class UIManager : MonoBehaviour
                 selectedButton.onClick.Invoke();
             }
         }
+
+        // Check if Enter key is pressed to trigger the selected button's click
+        if (panel.activeSelf && Input.GetKeyDown(KeyCode.Return))
+        {
+            panel.SetActive(false);  // Hide the panel
+            Time.timeScale = 1;  // Resume the game
+        }
+
+        // Handle PausePanel and arrow key navigation
+        if (pausePanel.activeSelf)
+        {
+            if (Input.GetKeyDown(KeyCode.UpArrow) || Input.GetKeyDown(KeyCode.DownArrow))
+            {
+                // Cycle between Resume and Quit buttons
+                SelectPauseButton(selectedPauseButton == resumeButton ? quitFromPauseButton : resumeButton);
+            }
+
+            if (Input.GetKeyDown(KeyCode.Return))
+            {
+                selectedPauseButton.onClick.Invoke();
+            }
+        }
+
+        // Pressing ESC will toggle PausePanel
+        if (Input.GetKeyDown(KeyCode.Escape))
+        {
+            if (pausePanel.activeSelf)
+            {
+                ResumeGame(); // If PausePanel is active, resume the game
+            }
+            else
+            {
+                ShowPausePanel(); // Otherwise, show the PausePanel
+            }
+        }
     }
 
     private void PersistCanvas()
@@ -174,15 +224,6 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    private void QuitGame()
-    {
-        Time.timeScale = 1; 
-        #if UNITY_EDITOR
-        UnityEditor.EditorApplication.isPlaying = false; 
-        #else
-        Application.Quit(); 
-        #endif
-    }
 
     public void ShowCaughtPopup()
     {
@@ -192,13 +233,11 @@ public class UIManager : MonoBehaviour
 
     private void RestartGame()
     {
-        // Ensure time scale is reset
-        Time.timeScale = 1; 
+        Time.timeScale = 1; // Ensure time scale is reset
 
         // Destroy all objects except the main camera
         foreach (GameObject obj in FindObjectsOfType<GameObject>())
         {
-            // Check if the object is not the main camera
             if (obj != Camera.main.gameObject)
             {
                 Destroy(obj);
@@ -225,18 +264,66 @@ public class UIManager : MonoBehaviour
         }
     }
 
-    // New function to show a message in the panel and pause the game
     public void ShowMessageAndPause(string message)
     {
         if (panel != null && panelText != null)
         {
-            panel.SetActive(true);  // Enable the panel
-            panelText.text = message;  // Set the message
+            panel.SetActive(true);
+            panelText.text = message;
             Time.timeScale = 0;  // Freeze the game
         }
     }
 
-    // Function to change the selected button and update its color
+    private void SelectPauseButton(Button newButton)
+    {
+        DeselectButton(selectedPauseButton);
+        selectedPauseButton = newButton;
+        UpdatePauseButtonColor();
+    }
+
+    private void DeselectButton(Button button)
+    {
+        ColorBlock colors = button.colors;
+        colors.normalColor = defaultButtonColor;
+        button.colors = colors;
+    }
+
+    private void UpdatePauseButtonColor()
+    {
+        ColorBlock colors = selectedPauseButton.colors;
+        colors.normalColor = selectedButtonColor;
+        selectedPauseButton.colors = colors;
+    }
+
+    private void ResumeGame()
+    {
+        pausePanel.SetActive(false);
+        Time.timeScale = 1; // Resume the game
+    }
+
+    private void QuitGame()
+    {
+        Time.timeScale = 1; // Ensure time scale is reset
+
+        // Destroy all objects except the main camera
+        foreach (GameObject obj in FindObjectsOfType<GameObject>())
+        {
+            if (obj != Camera.main.gameObject)
+            {
+                Destroy(obj);
+            }
+        }
+
+        // Load the start scene
+        SceneManager.LoadScene("Start");
+    }
+
+    private void ShowPausePanel()
+    {
+        pausePanel.SetActive(true);
+        Time.timeScale = 0; // Freeze the game
+    }
+
     private void SelectButton(Button newButton)
     {
         // Deselect the previous button
@@ -249,13 +336,6 @@ public class UIManager : MonoBehaviour
         UpdateButtonColor();
     }
 
-    // Function to deselect a button and restore its default color
-    private void DeselectButton(Button button)
-    {
-        ColorBlock colors = button.colors;
-        colors.normalColor = defaultButtonColor;
-        button.colors = colors;
-    }
 
     // Function to update the selected button's color
     private void UpdateButtonColor()

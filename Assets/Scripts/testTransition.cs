@@ -7,9 +7,9 @@ using System.IO; // Import for file handling
 
 public class TestTransition : MonoBehaviour
 {
-    public string groundFloorSceneName = "GroundFloor"; // Ground floor scene name
-    public string courtyardSceneName = "Courtyard"; // Courtyard scene name
-    private string saveFilePath; // Dynamic save file path
+    public string groundFloorSceneName = "GroundFloor"; 
+    public string courtyardSceneName = "Courtyard"; 
+    private string saveFilePath; 
 
     // Panel and Buttons
     public GameObject controlsPanel; // Reference to controls panel
@@ -23,6 +23,9 @@ public class TestTransition : MonoBehaviour
 
     // Flag to track if controls panel is open
     private bool isControlsPanelActive = false;
+
+    // Audio Source for background music
+    private AudioSource audioSource;
 
     // Start is called before the first frame update
     void Start()
@@ -43,6 +46,11 @@ public class TestTransition : MonoBehaviour
 
         // Hide controls panel at start
         controlsPanel.SetActive(false);
+
+        audioSource = GetComponent<AudioSource>();
+
+        // Play background music
+        // PlayBackgroundMusic();
     }
 
     // Update is called once per frame
@@ -136,5 +144,24 @@ public class TestTransition : MonoBehaviour
         controlsPanel.SetActive(false);
         Time.timeScale = 1f; // Resume the game
         isControlsPanelActive = false; // Mark the controls panel as inactive
+    }
+
+    // Function to play background music
+    void PlayBackgroundMusic()
+    {
+        // Load the audio clip from Resources/sounds
+        AudioClip backgroundMusic = Resources.Load<AudioClip>("Sounds/background_music");
+
+        // If the audio clip exists, play it
+        if (backgroundMusic != null)
+        {
+            audioSource.clip = backgroundMusic;
+            audioSource.loop = true; // Make the music loop
+            audioSource.Play();
+        }
+        else
+        {
+            Debug.LogError("Background music file not found in Resources/sounds.");
+        }
     }
 }
